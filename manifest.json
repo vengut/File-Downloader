@@ -1,0 +1,23 @@
+{
+  "name": "Sniffer",
+  "description": "",
+  "version": "1.0",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "activeTab", "scripting", "webRequest", "tabs"],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "/images/sniffer.png"
+    }
+  },
+  "icons": {
+    "128": "/images/sniffer.png"
+  },
+  "options_page": "options.html"
+}
