@@ -2,10 +2,10 @@ chrome.webRequest.onResponseStarted.addListener((details) => {
     if (details.url && details.url.includes(".mp3")) {
       let link = details.url;
 
-      chrome.storage.sync.get(['links'], (result) => {
-        let links = result.links;
+      chrome.storage.sync.get("links", (result) => {
+        let links = result['links'];
 
-        if (links === undefined) {
+        if (links === undefined || links === undefined) {
           links = [];
         }
 
