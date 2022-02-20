@@ -1,20 +1,22 @@
 import { Injectable } from '@angular/core';
-import { from, map, Observable, of, switchMap } from 'rxjs';
+import { from, map, Observable } from 'rxjs';
+import { HttpResponseModel } from './http-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class ChromeStorageService {
-    constructor() { }
+    constructor() {}
 
-    public getLinks(): Observable<string[]> {
-        return from(chrome.storage.sync.get('links')).pipe(
-            map(sync => {
-                let links: string[] = sync['links'];
-                return links;
-            })
+    public getResponses(): Observable<HttpResponseModel[]> {
+        return this.getValue('responses');
+    }
+
+    public getValue<T>(key: string): Observable<T> {
+        return from(chrome.storage.local.get(key)).pipe(
+            map(local => local[key])
         );
     }
     
-    public setLinks(newLinks: string[]) {
-        return from(chrome.storage.sync.set({ links: newLinks })).pipe( switchMap(() => of(newLinks)));
+    public clearResponses() {
+        return from(chrome.storage.local.set({ responses: [] }));
     }
 }

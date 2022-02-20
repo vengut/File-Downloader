@@ -35,7 +35,10 @@
               "src/sniffer.png"
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "node_modules/primeng/resources/themes/saga-blue/theme.css",
+              "node_modules/primeng/resources/primeng.min.css",
+              "node_modules/primeicons/primeicons.css"
             ],
             "scripts": []
           },
@@ -59,7 +62,13 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
-              "outputHashing": "none"
+              "outputHashing": "none",
+              "optimization": {
+                "styles": {
+                  "minify": false,
+                  "inlineCritical": false
+                }
+              }
             },
             "development": {
               "outputHashing": "none",

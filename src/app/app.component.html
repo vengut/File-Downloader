@@ -1,15 +1,30 @@
-<button 
-    mat-raised-button
-    (click)="getLinks()"
+<p-button
+    (click)="startListener()"
+>
+    Start Listener
+</p-button>
+
+<button
+    (click)="stopListener()"
+>
+    Stop Listener
+</button>
+
+<br/>
+
+<button
+    (click)="getResponses()"
 >
     Get
 </button>
 
-<button 
-    mat-raised-button
-    (click)="clearLinks()"
+<br/>
+
+<button
+    (click)="clearResponses()"
 >
     Delete
 </button>
+
 
 <router-outlet></router-outlet>

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { ChromeRuntimeService } from './services/chrome-runtime.service';
 import { ChromeStorageService } from './services/chrome-storage.service';
 
 @Component({
@@ -7,13 +8,24 @@ import { ChromeStorageService } from './services/chrome-storage.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  constructor(private chromeStorageService: ChromeStorageService) {}
-  
-  public getLinks() {
-    this.chromeStorageService.getLinks().subscribe(links => console.log(links));
+  constructor(
+    private chromeRuntimeService: ChromeRuntimeService,
+    private chromeStorageService: ChromeStorageService) {
   }
 
-  public clearLinks() {
-    this.chromeStorageService.setLinks([]);
+  public startListener() {
+    this.chromeRuntimeService.startListener();
+  }
+
+  public stopListener() {
+    this.chromeRuntimeService.stopListener();
+  }
+
+  public getResponses() {
+    this.chromeStorageService.getResponses().subscribe(responses => console.log(responses));
+  }
+
+  public clearResponses() {
+    this.chromeStorageService.clearResponses();
   }
 }

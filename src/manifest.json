@@ -11,12 +11,15 @@
     "<all_urls>"
   ],
   "action": {
-    "default_popup": "index.html",
     "default_icon": {
       "128": "sniffer.png"
     }
   },
   "icons": {
     "128": "sniffer.png"
+  },
+  "options_ui": {
+    "page": "index.html",
+    "open_in_tab": true
   }
 }
