@@ -19,6 +19,9 @@ import {MatToolbarModule} from "@angular/material/toolbar";
 import {MultiSelectModule} from "primeng/multiselect";
 import {RippleModule} from "primeng/ripple";
 import {BadgeModule} from "primeng/badge";
+import {ToastService} from "./services/toast.service";
+import {MessageService} from "primeng/api";
+import { ToastrModule } from 'ngx-toastr';
 
 
 @NgModule({
@@ -43,7 +46,8 @@ import {BadgeModule} from "primeng/badge";
         MatToolbarModule,
         MultiSelectModule,
         RippleModule,
-        BadgeModule
+        BadgeModule,
+        ToastrModule.forRoot()
     ],
     providers: [],
     bootstrap: [AppComponent]

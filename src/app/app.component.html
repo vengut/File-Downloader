@@ -2,9 +2,9 @@
     <button mat-icon-button>
         <mat-icon>menu</mat-icon>
     </button>
-    <span>File Downloader</span>
+    <span>Sniffer</span>
     <span style="flex: 1 1 auto;"></span>
-    <div class="p-buttonset">
+    <div class="p-buttonset" *ngIf="!isLoading">
         <p-toggleButton
             [(ngModel)]="isListening"
             onLabel="Listening"
@@ -14,6 +14,16 @@
             (onChange)="toggleListener()"
         >
         </p-toggleButton>
+        <button
+            pButton
+            pRipple
+            type="button"
+            icon="pi pi-refresh"
+            label="Refresh"
+            class="p-button-success"
+            (click)="setResponses()"
+        >
+        </button>
         <button
             pButton
             pRipple
@@ -41,6 +51,9 @@
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
     [rowHover]="true"
     styleClass="p-datatable-gridlines"
+    [loading]="isLoading"
+    sortField="date"
+    [sortOrder]="-1"
 >
     <ng-template pTemplate="caption">
         <div class="row">
@@ -139,10 +152,10 @@
             <td>
                 <p-tableCheckbox [value]="response"></p-tableCheckbox>
             </td>
-            <td> {{ getURLDisplay(response.url) }}</td>
-            <td> {{ response.date | date : 'medium' }}</td>
+            <td> {{ response.urlDisplay }}</td>
+            <td> {{ response.dateDisplay }}</td>
             <td> {{ response.type }}</td>
-            <td> {{ getTabDisplay(response.tab) }}</td>
+            <td> {{ response.tabDisplay }}</td>
             <td style="text-align: center">
                 <button
                     pButton

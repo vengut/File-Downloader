@@ -1,13 +1,18 @@
-import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, NgZone, OnInit, ViewChild} from '@angular/core';
 import {ChromeRuntimeService} from './services/chrome-runtime.service';
 import {ChromeStorageService} from './services/chrome-storage.service';
 import {ResourceTypes} from "./services/http-response.model";
 import {SelectItem} from "primeng/api/selectitem";
-import {distinct} from "./utilities";
+import {distinct, getExtension, getPathName} from "./utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./app.model";
 import {Table} from "primeng/table";
-import {FilterService} from "primeng/api";
+import {FilterService, MessageService} from "primeng/api";
 import sanitize from "sanitize-filename";
+import {DatePipe} from "@angular/common";
+import {groupBy, orderBy} from "lodash"
+import {concatMap, delay, finalize, from, of, tap} from "rxjs";
+import {ToastService, ToastType} from "./services/toast.service";
+
 
 @Component({
     selector: 'app-root',
@@ -16,9 +21,13 @@ import sanitize from "sanitize-filename";
 })
 export class AppComponent implements OnInit, AfterViewInit {
     public readonly MAX_CHARACTER_COUNT: number = 69;
+    public readonly DATE_FORMAT: string = 'medium';
     public readonly DEFAULT_URL_FILTER: string = '.mp3';
-    public isListening: boolean = false;
+    public readonly DOWNLOAD_DELAY: number = 2000;
+
     @ViewChild('dt', {static: false}) public table!: Table;
+    public isLoading: boolean = false;
+    public isListening: boolean = false;
 
     public columns: HttpResponseTableColumn[] = [];
     public globalFilter: string = "";
@@ -60,7 +69,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     constructor(
         private chromeRuntimeService: ChromeRuntimeService,
         private chromeStorageService: ChromeStorageService,
-        private filterService: FilterService
+        private filterService: FilterService,
+        private toastService: ToastService
     ) {
         this.columns = [
             { field: 'url', header: 'URL', sortable: true },
@@ -100,15 +110,6 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.setResponses();
     }
 
-    public getURLDisplay(url: string, length: number = this.MAX_CHARACTER_COUNT) {
-        const pathName = new URL(url).pathname;
-        return pathName.substring(pathName.length - length);
-    }
-
-    public getTabDisplay(tab: string, length: number = this.MAX_CHARACTER_COUNT) {
-        return tab.substring(0, length);
-    }
-
     public setIsListening() {
         this.chromeStorageService.getIsListening().subscribe((isListening) => {
             this.isListening = isListening;
@@ -121,23 +122,71 @@ export class AppComponent implements OnInit, AfterViewInit {
                 this.responses = responses.map(r => ({
                     id: r.id,
                     url: r.url,
+                    urlDisplay: this.getURLDisplay(r.url),
                     type: r.type,
                     date: new Date(r.timestamp),
-                    tab: r.tab
+                    dateDisplay: this.getDateDisplay(r.timestamp),
+                    tab: r.tab,
+                    tabDisplay: this.getTabDisplay(r.tab)
                 }));
             });
     }
 
+
     public downloadUrl(response: HttpResponseTableModel) {
-        const extension = new URL(response.url).pathname.split('.').pop();
-        chrome.downloads.download({
-            filename: `${sanitize(response.tab)}.${extension}`,
-            url: response.url
-        });
+        const fileName = sanitize(response.tab);
+        const extension = getExtension(response.url);
+
+        const fullFileName = `${fileName}.${extension}`;
+        try {
+            chrome.downloads.download({
+                filename: fullFileName,
+                url: response.url
+            }, (downloadId) => {
+                console.log(downloadId);
+            });
+
+            this.toastService.toast(ToastType.Success, "Download Started", `File Name: ${fileName.substring(0, 50)}.${extension}\n Date: ${response.dateDisplay}`);
+        }
+        catch(e) {
+            this.toastService.toast(ToastType.Error, "Failed to Start Download", `File Name: ${fileName.substring(0, 50)}.${extension}\n Date: ${response.dateDisplay}\n Error: ${e}`);
+        }
     }
 
     public downloadUrls() {
-        console.log(this.selectedResponses);
+        this.isLoading = true;
+
+        const groupedResponses = groupBy(this.selectedResponses, a => a.urlDisplay);
+
+        let uniqueResponses: HttpResponseTableModel[] = [];
+        Object.entries(groupedResponses).forEach(([_key, value])=>{
+            const mostRecentResponse = orderBy(value, 'date', 'desc')[0];
+            uniqueResponses.push(mostRecentResponse);
+        });
+        uniqueResponses = orderBy(uniqueResponses, 'date', 'asc');
+
+        from(uniqueResponses).pipe(
+            concatMap(response => of(response).pipe(delay(this.DOWNLOAD_DELAY))),
+            finalize(() => this.isLoading = false)
+        ).subscribe(response =>{
+            this.downloadUrl(response);
+        });
+
         this.selectedResponses = [];
+    }
+
+    private getDateDisplay(timestamp: number, format: string = this.DATE_FORMAT): string {
+        const date = new Date(timestamp);
+        const dateDisplay = new DatePipe('en-US').transform(date, format);
+        return dateDisplay === null || dateDisplay === undefined ? "" : dateDisplay;
+    }
+
+    private getURLDisplay(url: string, length: number = this.MAX_CHARACTER_COUNT) {
+        const pathName = getPathName(url);
+        return pathName.substring(pathName.length - length);
+    }
+
+    private getTabDisplay(tab: string, length: number = this.MAX_CHARACTER_COUNT) {
+        return tab.substring(0, length);
     }
 }

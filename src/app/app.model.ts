@@ -8,7 +8,10 @@ export interface HttpResponseTableColumn {
 export interface HttpResponseTableModel {
     id: string;
     url: string;
+    urlDisplay: string;
     date: Date;
+    dateDisplay: string;
     type: string;
     tab: string;
+    tabDisplay: string;
 }
