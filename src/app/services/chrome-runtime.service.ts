@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ChromeRuntimeService {
-    constructor() {}
+    constructor() {
+    }
 
     public toggleListener() {
         return chrome.runtime.sendMessage(null);

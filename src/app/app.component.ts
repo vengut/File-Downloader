@@ -1,38 +1,48 @@
-import { Component, OnInit } from '@angular/core';
-import { interval, switchMap } from 'rxjs';
-import { ChromeRuntimeService } from './services/chrome-runtime.service';
-import { ChromeStorageService } from './services/chrome-storage.service';
+import {Component, OnInit} from '@angular/core';
+import {forkJoin, interval, switchMap} from 'rxjs';
+import {ChromeRuntimeService} from './services/chrome-runtime.service';
+import {ChromeStorageService} from './services/chrome-storage.service';
+import {HttpResponseModel, HttpResponseTableModel} from "./services/http-response.model";
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  public isListening: boolean = false;
-  
-  constructor(
-    private chromeRuntimeService: ChromeRuntimeService,
-    private chromeStorageService: ChromeStorageService
-  ) { }
+    public isListening: boolean = false;
+    public responses: HttpResponseTableModel[] = [];
+    public selectedResponses: HttpResponseTableModel[] = [];
 
-  ngOnInit() {
-    interval(100)
-      .pipe(switchMap(() => this.chromeStorageService.getIsListening()))
-      .subscribe((isListening) => {
-        this.isListening = isListening;
-      });
-  }
+    constructor(
+        private chromeRuntimeService: ChromeRuntimeService,
+        private chromeStorageService: ChromeStorageService
+    ) {
+    }
 
-  public toggleListener() {
-    this.chromeRuntimeService.toggleListener();
-  }
+    ngOnInit() {
+        interval(100)
+            .pipe(switchMap(() => this.chromeStorageService.getIsListening()))
+            .subscribe((isListening) => {
+                this.isListening = isListening;
+            });
+    }
 
-  public getResponses() {
-    this.chromeStorageService.getResponses().subscribe(responses => console.log(responses));
-  }
+    public toggleListener() {
+        this.chromeRuntimeService.toggleListener();
+        this.chromeStorageService.getResponses()
+            .subscribe(responses => {
+                this.responses = responses.map(r => ({
+                    id: r.id,
+                    url: r.url,
+                    type: r.type,
+                    date: new Date(r.timestamp),
+                    tab: r.tab
+                }));
+            });
+    }
 
-  public clearResponses() {
-    this.chromeStorageService.clearResponses();
-  }
+    public clearResponses() {
+        this.chromeStorageService.clearResponses();
+    }
 }

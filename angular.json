@@ -75,7 +75,13 @@
               "outputHashing": "none",
               "customWebpackConfig": {
                 "path": "./custom-webpack-dev.config.ts"
-              }
+              },
+                "optimization": {
+                    "styles": {
+                        "minify": false,
+                        "inlineCritical": false
+                    }
+                }
             }
           },
           "defaultConfiguration": "production"

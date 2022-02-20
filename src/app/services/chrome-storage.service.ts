@@ -1,17 +1,26 @@
-import { Injectable } from '@angular/core';
-import { from, map, Observable } from 'rxjs';
-import { HttpResponseModel } from './http-response.model';
+import {Injectable} from '@angular/core';
+import {from, map, Observable} from 'rxjs';
+import {HttpResponseModel} from './http-response.model';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ChromeStorageService {
-    constructor() {}
+    constructor() {
+    }
 
     public getIsListening(): Observable<boolean> {
         return this.getValue('isListening');
     }
 
     public getResponses(): Observable<HttpResponseModel[]> {
-        return this.getValue('responses');
+        return this.getValue<HttpResponseModel[]>('responses').pipe(
+            map(responses => {
+                if (responses === null || responses === undefined){
+                    return [];
+                }
+
+                return responses;
+            })
+        );
     }
 
     public getValue<T>(key: string): Observable<T> {
@@ -19,8 +28,8 @@ export class ChromeStorageService {
             map(local => local[key])
         );
     }
-    
+
     public clearResponses() {
-        return from(chrome.storage.local.set({ responses: [] }));
+        return from(chrome.storage.local.set({responses: []}));
     }
 }

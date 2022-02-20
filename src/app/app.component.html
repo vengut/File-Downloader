@@ -1,30 +1,83 @@
-<p-toggleButton 
-    [(ngModel)]="isListening"
-    onLabel="Listening"
-    offLabel="Listen"
-    onIcon="pi pi-spin pi-spinner" 
-    offIcon="pi pi-times"
-    (onChange)="toggleListener()"
->
-</p-toggleButton>
-
-<br/>
-
-<br/>
-
-<button
-    (click)="getResponses()"
->
-    Get All Responses
-</button>
-
-<br/>
-
-<button
-    (click)="clearResponses()"
->
-    Delete All Responses
-</button>
-
-
-<router-outlet></router-outlet>
+<p-card>
+    <p-table
+        #dt
+        [value]="responses"
+        [(selection)]="selectedResponses"
+        [rows]="20"
+        [paginator]="true"
+        [globalFilterFields]="[]"
+        [rowHover]="true"
+        [autoLayout]="false"
+        dataKey="id"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        [showCurrentPageReport]="true"
+        columnResizeMode="fit"
+        [scrollable]="false"
+    >
+        <ng-template pTemplate="caption">
+            <div class="flex">
+                <p-toggleButton
+                    [(ngModel)]="isListening"
+                    onLabel="Listening"
+                    offLabel="Listen"
+                    onIcon="pi pi-spin pi-spinner"
+                    offIcon="pi pi-times"
+                    (onChange)="toggleListener()"
+                >
+                </p-toggleButton>
+                <button
+                    pButton
+                    label="Clear"
+                    class="p-button-outlined"
+                    icon="pi pi-times"
+                    (click)="clearResponses()"
+                >
+                </button>
+                <span class="p-input-icon-left ml-auto">
+                    <i class="pi pi-search"></i>
+                    <input pInputText type="text"  placeholder="Search keyword" />
+                </span>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="url">URL <p-sortIcon field="url"></p-sortIcon></th>
+                <th pSortableColumn="date">Date <p-sortIcon field="date"></p-sortIcon></th>
+                <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
+                <th pSortableColumn="tab">Tab <p-sortIcon field="tab"></p-sortIcon></th>
+                <th style="width: 8rem">Operations</th>
+            </tr>
+            <tr>
+                <th>
+                    <p-columnFilter type="text" field="url"></p-columnFilter>
+                </th>
+                <th>
+                    <p-columnFilter type="date" field="date"></p-columnFilter>
+                </th>
+                <th>
+                    <p-columnFilter type="text" field="type"></p-columnFilter>
+                </th>
+                <th>
+                    <p-columnFilter type="text" field="tab"></p-columnFilter>
+                </th>
+                <th style="width: 8rem"></th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-response>
+            <tr>
+                <td> {{ response.url.substring(9,19) }}</td>
+                <td> {{ response.date | date : 'medium' }}</td>
+                <td> {{ response.type }}</td>
+                <td> {{ response.tab }}</td>
+                <td style="text-align: center">
+                    <button pButton type="button" class="p-button-secondary" icon="pi pi-download                       "></button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="5">No Responses found.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</p-card>
