@@ -45,6 +45,18 @@ export class AppComponent implements OnInit, AfterViewInit {
         }
         return [];
     }
+
+    public get selectedResponsesLength(): number {
+        if (this.selectedResponses) {
+            return this.selectedResponses.length;
+        }
+        return 0;
+    }
+
+    public get isDownloadsEnabled(): boolean {
+        return this.selectedResponsesLength > 0;
+    }
+
     constructor(
         private chromeRuntimeService: ChromeRuntimeService,
         private chromeStorageService: ChromeStorageService,
@@ -122,5 +134,10 @@ export class AppComponent implements OnInit, AfterViewInit {
             filename: `${sanitize(response.tab)}.${extension}`,
             url: response.url
         });
+    }
+
+    public downloadUrls() {
+        console.log(this.selectedResponses);
+        this.selectedResponses = [];
     }
 }

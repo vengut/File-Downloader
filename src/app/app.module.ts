@@ -18,6 +18,7 @@ import {DropdownModule} from "primeng/dropdown";
 import {MatToolbarModule} from "@angular/material/toolbar";
 import {MultiSelectModule} from "primeng/multiselect";
 import {RippleModule} from "primeng/ripple";
+import {BadgeModule} from "primeng/badge";
 
 
 @NgModule({
@@ -41,7 +42,8 @@ import {RippleModule} from "primeng/ripple";
         DropdownModule,
         MatToolbarModule,
         MultiSelectModule,
-        RippleModule
+        RippleModule,
+        BadgeModule
     ],
     providers: [],
     bootstrap: [AppComponent]

@@ -3,6 +3,28 @@
         <mat-icon>menu</mat-icon>
     </button>
     <span>File Downloader</span>
+    <span style="flex: 1 1 auto;"></span>
+    <div class="p-buttonset">
+        <p-toggleButton
+            [(ngModel)]="isListening"
+            onLabel="Listening"
+            offLabel="Listen"
+            onIcon="pi pi-spin pi-spinner"
+            offIcon="pi pi-sync"
+            (onChange)="toggleListener()"
+        >
+        </p-toggleButton>
+        <button
+            pButton
+            pRipple
+            type="button"
+            icon="pi pi-times"
+            label="Clear"
+            class="p-button-danger"
+            (click)="clearResponses()"
+        >
+        </button>
+    </div>
 </mat-toolbar>
 
 <p-table
@@ -22,28 +44,20 @@
 >
     <ng-template pTemplate="caption">
         <div class="row">
-            <div class="p-buttonset col-sm-2">
-                <p-toggleButton
-                    [(ngModel)]="isListening"
-                    onLabel="Listening"
-                    offLabel="Listen"
-                    onIcon="pi pi-spin pi-spinner"
-                    offIcon="pi pi-sync"
-                    (onChange)="toggleListener()"
-                >
-                </p-toggleButton>
-                <button
-                    pButton
-                    pRipple
+            <div class="col-sm-2">
+                <p-button
                     type="button"
-                    icon="pi pi-times"
-                    label="Clear"
-                    class="p-button-outlined p-button-danger"
-                    (click)="clearResponses()"
+                    pRipple
+                    icon="pi pi-download"
+                    label="Download"
+                    styleClass="p-button-success"
+                    [badge]="selectedResponsesLength.toString()"
+                    (click)="downloadUrls()"
+                    [disabled]="!isDownloadsEnabled"
                 >
-                </button>
+                </p-button>
             </div>
-            <div class="col-sm-2 offset-sm-8">
+            <div class="offset-sm-8 col-sm-2">
                 <span class="p-input-icon-left ml-auto">
                     <i class="pi pi-search"></i>
                     <input
