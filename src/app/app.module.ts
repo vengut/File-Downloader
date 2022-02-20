@@ -14,6 +14,10 @@ import {ToolbarModule} from "primeng/toolbar";
 import {InputTextModule} from "primeng/inputtext";
 import {MatCardModule} from "@angular/material/card";
 import {CardModule} from "primeng/card";
+import {DropdownModule} from "primeng/dropdown";
+import {MatToolbarModule} from "@angular/material/toolbar";
+import {MultiSelectModule} from "primeng/multiselect";
+import {RippleModule} from "primeng/ripple";
 
 
 @NgModule({
@@ -33,7 +37,11 @@ import {CardModule} from "primeng/card";
         ToolbarModule,
         InputTextModule,
         MatCardModule,
-        CardModule
+        CardModule,
+        DropdownModule,
+        MatToolbarModule,
+        MultiSelectModule,
+        RippleModule
     ],
     providers: [],
     bootstrap: [AppComponent]

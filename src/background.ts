@@ -41,11 +41,12 @@ chrome.webRequest.onResponseStarted.addListener((responseDetails) => {
                     statusText: responseDetails.statusLine,
                     type: responseDetails.type,
                     fromCache: responseDetails.fromCache,
+                    tab: ""
                 };
 
                 if (responseDetails.tabId > 0) {
                     chrome.tabs.get(responseDetails.tabId).then(tab =>{
-                        response.tab = tab?.title;
+                        response.tab = tab.title ? tab.title : "Undefined";
                         updateResponses(responses, response);
                     },
                     _err => {
@@ -68,6 +69,6 @@ function updateResponses(responses: HttpResponseModel[], response: HttpResponseM
     responses = [...responses, response];
 
     chrome.storage.local.set({responses: responses}, function () {
-        console.log(`Updated: ${responses && responses[responses.length - 1]}`);
+        console.log(`Updated: ${responses && responses.length}`);
     });
 }

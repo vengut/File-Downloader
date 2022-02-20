@@ -11,7 +11,8 @@
         "activeTab",
         "scripting",
         "webRequest",
-        "tabs"
+        "tabs",
+        "downloads"
     ],
     "host_permissions": [
         "<all_urls>"
