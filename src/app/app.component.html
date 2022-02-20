@@ -1,21 +1,21 @@
-<p-button
-    (click)="startListener()"
+<p-toggleButton 
+    [(ngModel)]="isListening"
+    onLabel="Listening"
+    offLabel="Listen"
+    onIcon="pi pi-spin pi-spinner" 
+    offIcon="pi pi-times"
+    (onChange)="toggleListener()"
 >
-    Start Listener
-</p-button>
+</p-toggleButton>
 
-<button
-    (click)="stopListener()"
->
-    Stop Listener
-</button>
+<br/>
 
 <br/>
 
 <button
     (click)="getResponses()"
 >
-    Get
+    Get All Responses
 </button>
 
 <br/>
@@ -23,7 +23,7 @@
 <button
     (click)="clearResponses()"
 >
-    Delete
+    Delete All Responses
 </button>
 
 

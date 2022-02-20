@@ -4,11 +4,7 @@ import { Injectable } from '@angular/core';
 export class ChromeRuntimeService {
     constructor() {}
 
-    public startListener() {
-        return chrome.runtime.sendMessage(true);
-    }
-
-    public stopListener() {
-        return chrome.runtime.sendMessage(false);
+    public toggleListener() {
+        return chrome.runtime.sendMessage(null);
     }
 }

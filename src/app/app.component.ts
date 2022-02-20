@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { interval, switchMap } from 'rxjs';
 import { ChromeRuntimeService } from './services/chrome-runtime.service';
 import { ChromeStorageService } from './services/chrome-storage.service';
 
@@ -7,18 +8,24 @@ import { ChromeStorageService } from './services/chrome-storage.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+  public isListening: boolean = false;
+  
   constructor(
     private chromeRuntimeService: ChromeRuntimeService,
-    private chromeStorageService: ChromeStorageService) {
+    private chromeStorageService: ChromeStorageService
+  ) { }
+
+  ngOnInit() {
+    interval(100)
+      .pipe(switchMap(() => this.chromeStorageService.getIsListening()))
+      .subscribe((isListening) => {
+        this.isListening = isListening;
+      });
   }
 
-  public startListener() {
-    this.chromeRuntimeService.startListener();
-  }
-
-  public stopListener() {
-    this.chromeRuntimeService.stopListener();
+  public toggleListener() {
+    this.chromeRuntimeService.toggleListener();
   }
 
   public getResponses() {

@@ -8,9 +8,14 @@ chrome.runtime.onStartup.addListener(function() {
   chrome.storage.local.set({ isListening: false, responses: [] });
 });
 
-chrome.runtime.onMessage.addListener((isListenting: boolean, sender, sendResponse) => {
-  chrome.storage.local.set({ isListening: isListenting }).then(() =>{
-    console.log(`Listening to HTTP Requests: ${ isListenting }`);
+chrome.runtime.onMessage.addListener((toggleHttpListener, sender, sendResponse) => {
+  chrome.storage.local.get("isListening").then((result)  => {
+    let isListening: boolean = result["isListening"];
+    isListening  = !isListening;
+
+    chrome.storage.local.set({ isListening: isListening }).then(() =>{
+      console.log(`Toggled HTTP Request Listener: ${ isListening }`);
+    });
   });
 });
 
@@ -29,7 +34,7 @@ chrome.webRequest.onResponseStarted.addListener((responseDetails) => {
           id: responseDetails.requestId,
           url: responseDetails.url,
           method: responseDetails.method,
-          date: new Date(responseDetails.timeStamp),
+          timestamp: responseDetails.timeStamp,
           status: responseDetails.statusCode,
           statusText: responseDetails.statusLine,
           tabId: responseDetails.tabId,

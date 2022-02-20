@@ -6,6 +6,10 @@ import { HttpResponseModel } from './http-response.model';
 export class ChromeStorageService {
     constructor() {}
 
+    public getIsListening(): Observable<boolean> {
+        return this.getValue('isListening');
+    }
+
     public getResponses(): Observable<HttpResponseModel[]> {
         return this.getValue('responses');
     }
