@@ -20,50 +20,52 @@ chrome.runtime.onMessage.addListener((_toggleHttpListener, _sender, _sendRespons
         });
     });
 });
+chrome.webNavigation.onBeforeNavigate.addListener(() =>{
+    chrome.webRequest.onResponseStarted.addListener((responseDetails) => {
+            chrome.storage.local.get(["isListening", "responses"]).then((result) => {
+                let isListening: boolean = result["isListening"];
 
-chrome.webRequest.onResponseStarted.addListener((responseDetails) => {
-        chrome.storage.local.get(["isListening", "responses"]).then((result) => {
-            let isListening: boolean = result["isListening"];
+                if (isListening) {
+                    let responses = result["responses"];
 
-            if (isListening) {
-                let responses = result["responses"];
+                    if (responses === undefined || responses === null) {
+                        responses = [];
+                    }
 
-                if (responses === undefined || responses === null) {
-                    responses = [];
-                }
+                    const response: HttpResponseModel = {
+                        id: responseDetails.requestId,
+                        url: responseDetails.url,
+                        method: responseDetails.method,
+                        timestamp: responseDetails.timeStamp,
+                        status: responseDetails.statusCode,
+                        statusText: responseDetails.statusLine,
+                        type: responseDetails.type,
+                        fromCache: responseDetails.fromCache,
+                        tab: ""
+                    };
 
-                const response: HttpResponseModel = {
-                    id: responseDetails.requestId,
-                    url: responseDetails.url,
-                    method: responseDetails.method,
-                    timestamp: responseDetails.timeStamp,
-                    status: responseDetails.statusCode,
-                    statusText: responseDetails.statusLine,
-                    type: responseDetails.type,
-                    fromCache: responseDetails.fromCache,
-                    tab: ""
-                };
-
-                if (responseDetails.tabId > 0) {
-                    chrome.tabs.get(responseDetails.tabId).then(tab =>{
-                        response.tab = tab.title ? tab.title : "Undefined";
-                        updateResponses(responses, response);
-                    },
-                    _err => {
+                    if (responseDetails.tabId > 0) {
+                        chrome.tabs.get(responseDetails.tabId).then(tab =>{
+                                response.tab = tab.title ? tab.title : "Undefined";
+                                updateResponses(responses, response);
+                            },
+                            _err => {
+                                response.tab = "Undefined";
+                                updateResponses(responses, response);
+                            });
+                    }
+                    else {
                         response.tab = "Undefined";
                         updateResponses(responses, response);
-                    });
-                }
-                else {
-                    response.tab = "Undefined";
-                    updateResponses(responses, response);
-                }
+                    }
 
-            }
-        });
-    },
-    {urls: ["<all_urls>"]}
-);
+                }
+            });
+        },
+        {urls: ["<all_urls>"]}
+    );
+});
+
 
 function updateResponses(responses: HttpResponseModel[], response: HttpResponseModel) {
     responses = [...responses, response];
