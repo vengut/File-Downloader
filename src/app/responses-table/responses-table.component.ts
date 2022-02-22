@@ -1,23 +1,22 @@
 import {AfterViewInit, Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
-import {containedInList, distinct, getExtension, getPathName} from "../utilities";
+import {containedInList, distinct, FileName, getPathName} from "../utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./responses-table.model";
 import {Table} from "primeng/table";
 import {FilterService} from "primeng/api";
-import sanitize from "sanitize-filename";
 import {DatePipe} from "@angular/common";
 import {groupBy, orderBy} from "lodash"
 import {concatMap, delay, finalize, from, of} from "rxjs";
 import {ToastService, ToastType} from "../services/toast.service";
 import {ChromeDownloadsService} from '../services/chrome/chrome-downloads.service';
-import { ChromeSettingsService } from '../services/chrome/chrome-settings.service';
+import {ChromeSettingsService} from '../services/chrome/chrome-settings.service';
+import {Clipboard} from "@angular/cdk/clipboard";
 
 @Component({
     selector: 'responses-table',
     templateUrl: 'responses-table.component.html'
 })
-
 export class ResponsesTableComponent implements AfterViewInit {
     public readonly MAX_CHARACTER_COUNT: number = 69;
     public readonly DATE_FORMAT: string = 'medium';
@@ -83,7 +82,8 @@ export class ResponsesTableComponent implements AfterViewInit {
         private chromeSettingsService: ChromeSettingsService,
         private filterService: FilterService,
         private chromeDownloadsService: ChromeDownloadsService,
-        private toastService: ToastService
+        private toastService: ToastService,
+        private clipboard: Clipboard
     ) {
         this.columns = [
             { field: 'url', header: 'URL', sortable: true },
@@ -103,20 +103,17 @@ export class ResponsesTableComponent implements AfterViewInit {
     }
 
     public downloadUrl(response: HttpResponseTableModel, saveAs: boolean = true) {
-        const fileName = sanitize(response.tab);
-        const extension = getExtension(response.url);
-        const fullFileName = `${fileName}.${extension}`;
+        const fileName = new FileName(response.url, response.tab);
 
-        this.chromeDownloadsService.downloadFile(response.url, fullFileName, saveAs).subscribe({
+        this.chromeDownloadsService.downloadFile(response.url, fileName.toString(), saveAs).subscribe({
             next: (downloadId) => {
                 if (!saveAs) {
                     console.log(`Download Started: ${downloadId}`);
-                    this.toastService.toast(ToastType.Success, "Download Started", `File Name: ${fileName.substring(0, 50)}.${extension}<br/>Date: ${response.dateDisplay}`);
+                    this.toastService.toast(ToastType.Success, "Download Started", `File Name: ${fileName.shortenedString()}<br/>Date: ${response.dateDisplay}`);
                 }
             },
             error: (err: string) =>{
-                console.log(`Download Failed: ${err}`);
-                this.toastService.toast(ToastType.Error, "Failed to Start Download", `File Name: ${fileName.substring(0, 50)}.${extension}<br/>Date: ${response.dateDisplay}<br/>Error: ${err}`);
+                this.toastService.toast(ToastType.Error, "Failed to Start Download", err);
             }
         });
     }
@@ -141,6 +138,20 @@ export class ResponsesTableComponent implements AfterViewInit {
         });
 
         this.selectedResponses = [];
+    }
+
+    public streamUrl(response: HttpResponseTableModel) {
+        const file = new FileName(response.url, response.tab);
+
+        const command = `streamlink "hlsvariant://${response.url} name_key=bitrate" best -o ${file.name}.ts`;
+
+        const isCopied = this.clipboard.copy(command);
+        if (isCopied) {
+            this.toastService.toast(ToastType.Success, "Copied Command Successfully")
+        }
+        else {
+            this.toastService.toast(ToastType.Warn, "Command", command, 30000, false);
+        }
     }
 
     public filterUrls() {

@@ -9,7 +9,7 @@ export class ChromeDownloadsService {
         return new Observable((observer) => {
             chrome.downloads.download({filename, url, saveAs}, downloadId => {
                 if (downloadId === undefined) {
-                    observer.error(`Failed to download ${filename}: ${chrome.runtime.lastError} `);
+                    observer.error(`Failed to download ${filename}: ${chrome.runtime.lastError?.message} `);
                 }
                 else {
                     observer.next(downloadId);

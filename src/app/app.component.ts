@@ -107,6 +107,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     public clearResponses() {
         this.isLoading = true;
-        this.chromeStorageService.clearResponses().subscribe(() => this.isLoading = false);;
+        this.chromeStorageService.clearResponses().subscribe(() => this.isLoading = false);
+        this.refreshTable();
     }
 }

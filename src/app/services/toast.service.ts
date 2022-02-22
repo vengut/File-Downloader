@@ -10,11 +10,6 @@ export class ToastService {
     constructor(private toastr: ToastrService) { }
 
     public toast(severity: ToastType = ToastType.Info, title: string, message?: string, lifetime: number = this.LIFETIME, dismissible: boolean = true) {
-        if (message === null || message === undefined) {
-            message = title;
-            title = severity;
-        }
-
         this.toastr.show(
             message,
             title,

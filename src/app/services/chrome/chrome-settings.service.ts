@@ -4,7 +4,7 @@ import { ChromeSettingsKey } from './chrome-settings.model';
 
 @Injectable({providedIn: 'root'})
 export class ChromeSettingsService {
-    private readonly DEFAULT_POLLING_RATE: number = 5;
+    private readonly DEFAULT_POLLING_RATE: number = 30;
     constructor() { }
 
     public getPollingRate(): Observable<number> {

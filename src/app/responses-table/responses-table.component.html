@@ -59,7 +59,7 @@
                     {{ col.header}}
                 </th>
             </ng-container>
-            <th rowspan="2">Download</th>
+            <th rowspan="2">Options</th>
         </tr>
         <tr>
             <th>
@@ -118,14 +118,25 @@
             <td> {{ response.dateDisplay }}</td>
             <td> {{ response.type }}</td>
             <td> {{ response.tabDisplay }}</td>
-            <td style="text-align: center">
+            <td>
                 <button
                     pButton
+                    pRipple
                     type="button"
-                    class="p-button-secondary"
+                    icon="pi pi-video"
+                    class="p-button-rounded p-button-success me-1"
+                    (click)="streamUrl(response)"
+                >
+                </button>
+                <button
+                    pButton
+                    pRipple
+                    type="button"
+                    class="p-button-rounded p-button-help"
                     icon="pi pi-download"
                     (click)="downloadUrl(response)"
-                ></button>
+                >
+                </button>
             </td>
         </tr>
     </ng-template>
