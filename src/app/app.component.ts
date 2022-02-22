@@ -1,18 +1,22 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {forkJoin, mergeMap, Observable, Subscription, switchMap, timer} from 'rxjs';
 import {ChromeStorageService} from './services/chrome/chrome-storage.service';
 import {HttpResponseModel} from "./services/chrome/chrome-web-request.model";
+import {ChromeSettingsService} from "./services/chrome/chrome-settings.service";
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
     public isLoading: boolean = false;
     public isListening: boolean = false;
     public defaultURLFilter: string[] = [];
-
+    public pollingRate: number = 10;
     public responses: HttpResponseModel[] = [];
+
+    private responseTableSubscription$?: Subscription;
 
     public get responsesLength(): number {
         if (this.responses) {
@@ -35,7 +39,8 @@ export class AppComponent implements OnInit {
     }
 
     constructor(
-        private chromeStorageService: ChromeStorageService
+        private chromeStorageService: ChromeStorageService,
+        private chromeSettingsService: ChromeSettingsService
     ) { }
 
     ngOnInit() {
@@ -53,11 +58,46 @@ export class AppComponent implements OnInit {
             if (changes.isListeningChange) {
                 this.isListening = changes.isListeningChange;
             }
-
-            if (changes.responsesChange) {
-                this.responses = changes.responsesChange;
-            }
         });
+
+        this.chromeSettingsService.getPollingRate().subscribe(pollingRate => {
+            this.pollingRate = pollingRate;
+            this.updateResponseTableSubscription();
+        });
+    }
+
+    ngOnDestroy() {
+        if (this.responseTableSubscription$ !== undefined) {
+            this.responseTableSubscription$.unsubscribe();
+        }
+    }
+
+    public updatePollingRate(_pollingRate: number) {
+        this.chromeSettingsService.setPollingRate(this.pollingRate);
+        this.updateResponseTableSubscription();
+    }
+
+    public updateResponseTableSubscription() {
+        if (this.responseTableSubscription$ !== undefined) {
+            this.responseTableSubscription$.unsubscribe();
+        }
+
+        this.responseTableSubscription$ = timer(1000, this.pollingRate * 1000).pipe(
+            switchMap((_n) => this.chromeStorageService.getResponses())
+        ).subscribe(
+            (responses) => {
+                this.responses = responses;
+            }
+        );
+    }
+
+    public refreshTable() {
+        this.chromeStorageService.getResponses()
+            .subscribe(
+                (responses) => {
+                    this.responses = responses;
+                }
+            );
     }
 
     public toggleListener() {

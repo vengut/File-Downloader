@@ -21,6 +21,7 @@ import {RippleModule} from "primeng/ripple";
 import {BadgeModule} from "primeng/badge";
 import {ToastrModule} from 'ngx-toastr';
 import {ResponsesTableComponent} from './responses-table/responses-table.component';
+import {InputNumberModule} from "primeng/inputnumber";
 
 
 @NgModule({
@@ -47,7 +48,8 @@ import {ResponsesTableComponent} from './responses-table/responses-table.compone
         MultiSelectModule,
         RippleModule,
         BadgeModule,
-        ToastrModule.forRoot()
+        ToastrModule.forRoot(),
+        InputNumberModule
     ],
     providers: [],
     bootstrap: [AppComponent]

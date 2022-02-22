@@ -4,12 +4,23 @@ import { ChromeSettingsKey } from './chrome-settings.model';
 
 @Injectable({providedIn: 'root'})
 export class ChromeSettingsService {
+    private readonly DEFAULT_POLLING_RATE: number = 5;
     constructor() { }
-    
+
+    public getPollingRate(): Observable<number> {
+        return this.getSetting<number>(ChromeSettingsKey.PollingRate).pipe(
+            map(pollingRate => pollingRate === null || pollingRate === undefined ? this.DEFAULT_POLLING_RATE : pollingRate)
+        );
+    }
+
     public getUrlFilter(): Observable<string[]> {
         return this.getSetting<string[]>(ChromeSettingsKey.UrlFilter).pipe(
             map(urlFilter => urlFilter === null || urlFilter === undefined ? [] : urlFilter)
         );
+    }
+
+    public setPollingRate(pollingRate: number): Observable<number> {
+        return this.setSetting<number>(ChromeSettingsKey.PollingRate, pollingRate === undefined || pollingRate === null ? this.DEFAULT_POLLING_RATE : pollingRate);
     }
 
     public setUrlFilterSetting(urlFilter: string[]): Observable<string[]> {

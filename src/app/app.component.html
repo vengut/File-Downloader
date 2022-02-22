@@ -4,30 +4,61 @@
     </button>
     <span>Sniffer</span>
     <span style="flex: 1 1 auto;"></span>
-    <div class="p-buttonset">
-        <p-toggleButton
-            [(ngModel)]="isListening"
-            [offLabel]="offListeningLabel"
-            [onLabel]="onListeningLabel"
-            onIcon="pi pi-spin pi-spinner"
-            offIcon="pi pi-sync"
-            (onChange)="toggleListener()"
-            [disabled]="isLoading"
-        >
-        </p-toggleButton>
-        <button
-            pButton
-            pRipple
-            type="button"
-            icon="pi pi-times"
-            label="Clear"
-            class="p-button-danger"
-            (click)="clearResponses()"
-            [disabled]="isLoading"
-        >
-        </button>
+    <div class="row">
+        <div class ="col-sm-4 offset-sm-2 mr-1">
+            <div class="p-inputgroup">
+                <button
+                    pButton
+                    pRipple
+                    type="button"
+                    icon="pi pi-refresh"
+                    class="p-button-success"
+                    (click)="refreshTable()"
+                >
+                </button>
+                <p-inputNumber
+                    inputId="pollingRate"
+                    [(ngModel)]="pollingRate"
+                    (onInput)="updatePollingRate($event.value)"
+                    [showButtons]="true"
+                    mode="decimal"
+                    suffix=" s"
+                    [min]="1"
+                    [max]="100"
+                    incrementButtonClass="p-button-success"
+                    decrementButtonClass="p-button-success"
+                >
+                </p-inputNumber>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="p-buttonset">
+                <p-toggleButton
+                    [ngModel]="isListening"
+                    [offLabel]="offListeningLabel"
+                    [onLabel]="onListeningLabel"
+                    onIcon="pi pi-spin pi-spinner"
+                    offIcon="pi pi-sync"
+                    (click)="toggleListener()"
+                    [disabled]="isLoading"
+                >
+                </p-toggleButton>
+                <button
+                    pButton
+                    pRipple
+                    type="button"
+                    icon="pi pi-times"
+                    label="Clear"
+                    class="p-button-danger"
+                    (click)="clearResponses()"
+                    [disabled]="isLoading"
+                >
+                </button>
+            </div>
+        </div>
     </div>
 </mat-toolbar>
+
 
 <responses-table
     [responseData]="responses"
