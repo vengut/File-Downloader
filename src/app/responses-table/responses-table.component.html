@@ -1,20 +1,19 @@
 <p-table
     #dt
-    [value]="responses"
     dataKey="id"
+    styleClass="p-datatable-gridlines"
+    [value]="responses"
     [selectionPageOnly]="true"
     [(selection)]="selectedResponses"
     [paginator]="true"
     [rows]="25"
     [rowsPerPageOptions]="[10,25,50,100]"
-    [globalFilterFields]="[ 'url', 'type', 'tab' ]"
-    [showCurrentPageReport]="true"
-    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-    [rowHover]="true"
-    styleClass="p-datatable-gridlines"
-    [loading]="isLoading"
     sortField="date"
     [sortOrder]="-1"
+    [globalFilterFields]="[ 'url', 'type', 'tab' ]"
+    [loading]="isLoading"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} responses"
 >
     <ng-template pTemplate="caption">
         <div class="row">

@@ -22,12 +22,12 @@ export class ResponsesTableComponent implements AfterViewInit {
     public readonly DATE_FORMAT: string = 'medium';
     public readonly DEFAULT_URL_FILTER: string = '.mp3';
     public readonly DOWNLOAD_DELAY: number = 2000;
-    
+
     @Input() public isListening: boolean = false;
     @Input() public isLoading: boolean = false;
     @Output() public isLoadingChange: EventEmitter<boolean> = new EventEmitter<boolean>(false);
-    @Input() public responseData: HttpResponseModel[] = []; 
-    
+    @Input() public responseData: HttpResponseModel[] = [];
+
     @ViewChild('dt', {static: false}) public table!: Table;
 
     public columns: HttpResponseTableColumn[] = [];
@@ -94,8 +94,6 @@ export class ResponsesTableComponent implements AfterViewInit {
         this.filterService.register('incontains',(value: string, filter: string[]): boolean => {
             return filter.some(f => value.toLowerCase().includes(f.toLowerCase()));
         });
-
-
     }
 
     ngAfterViewInit() {
@@ -106,21 +104,23 @@ export class ResponsesTableComponent implements AfterViewInit {
         this.table.filter(this.urlFilter, 'url', 'incontains');
     }
 
-    public downloadUrl(response: HttpResponseTableModel) {
+    public downloadUrl(response: HttpResponseTableModel, saveAs: boolean = true) {
         const fileName = sanitize(response.tab);
         const extension = getExtension(response.url);
         const fullFileName = `${fileName}.${extension}`;
 
-        this.chromeDownloadsService.downloadFile(response.url, fullFileName).subscribe(
-            (downloadId) => {
+        this.chromeDownloadsService.downloadFile(response.url, fullFileName, saveAs).subscribe({
+            next: (downloadId) => {
                 console.log(`Download Started: ${downloadId}`);
-                this.toastService.toast(ToastType.Success, "Download Started", `File Name: ${fileName.substring(0, 50)}.${extension}<br/>Date: ${response.dateDisplay}`);
+                if (!saveAs) {
+                    this.toastService.toast(ToastType.Success, "Download Started", `File Name: ${fileName.substring(0, 50)}.${extension}<br/>Date: ${response.dateDisplay}`);
+                }
             },
-            (err: string) =>{
+            error: (err: string) =>{
                 console.log(`Download Failed: ${err}`);
                 this.toastService.toast(ToastType.Error, "Failed to Start Download", `File Name: ${fileName.substring(0, 50)}.${extension}<br/>Date: ${response.dateDisplay}<br/>Error: ${err}`);
             }
-        );
+        });
     }
 
     public downloadUrls() {
@@ -139,7 +139,7 @@ export class ResponsesTableComponent implements AfterViewInit {
             concatMap(response => of(response).pipe(delay(this.DOWNLOAD_DELAY))),
             finalize(() => this.updateIsLoading(false))
         ).subscribe(response =>{
-            this.downloadUrl(response);
+            this.downloadUrl(response, false);
         });
 
         this.selectedResponses = [];
