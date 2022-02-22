@@ -43,12 +43,12 @@ export class ChromeStorageService {
 
     public toggleListener(): Observable<boolean> {
         return this.getIsListening().pipe(
-            switchMap((isListening) => this.setValue(ChromeStorageKey.IsListening, !isListening))
+            switchMap((isListening) => this.setValue<boolean>(ChromeStorageKey.IsListening, !isListening))
         );
     }
 
     public clearResponses(): Observable<HttpResponseModel[]> {
-        return this.setValue(ChromeStorageKey.Responses, []);
+        return this.setValue<HttpResponseModel[]>(ChromeStorageKey.Responses, []);
     }
 
     private getValue<T>(key: ChromeStorageKey): Observable<T> {

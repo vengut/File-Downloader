@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
 import {containedInList, distinct, getExtension, getPathName} from "../utilities";
@@ -11,13 +11,14 @@ import {groupBy, orderBy} from "lodash"
 import {concatMap, delay, finalize, from, of} from "rxjs";
 import {ToastService, ToastType} from "../services/toast.service";
 import {ChromeDownloadsService} from '../services/chrome/chrome-downloads.service';
+import { ChromeSettingsService } from '../services/chrome/chrome-settings.service';
 
 @Component({
     selector: 'responses-table',
     templateUrl: 'responses-table.component.html'
 })
 
-export class ResponsesTableComponent {
+export class ResponsesTableComponent implements AfterViewInit {
     public readonly MAX_CHARACTER_COUNT: number = 69;
     public readonly DATE_FORMAT: string = 'medium';
     public readonly DOWNLOAD_DELAY: number = 2000;
@@ -79,6 +80,7 @@ export class ResponsesTableComponent {
     }
 
     constructor(
+        private chromeSettingsService: ChromeSettingsService,
         private filterService: FilterService,
         private chromeDownloadsService: ChromeDownloadsService,
         private toastService: ToastService
@@ -91,6 +93,13 @@ export class ResponsesTableComponent {
         ];
 
         this.filterService.register('containedInList', (value: string, filters: string[]): boolean => containedInList(value, filters));
+    }
+
+    ngAfterViewInit() {
+        this.chromeSettingsService.getUrlFilter().subscribe(urlFilter => {
+            this.urlFilter = urlFilter;
+            this.filterUrls();
+        });
     }
 
     public downloadUrl(response: HttpResponseTableModel, saveAs: boolean = true) {
@@ -136,6 +145,7 @@ export class ResponsesTableComponent {
 
     public filterUrls() {
         this.table.filter(this.urlFilter, 'url', 'containedInList');
+        this.chromeSettingsService.setUrlFilterSetting(this.urlFilter);
     }
 
     private updateIsLoading(isLoading: boolean) {
