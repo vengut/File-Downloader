@@ -22,7 +22,8 @@ export class ToastService {
                 timeOut: lifetime,
                 tapToDismiss: dismissible,
                 progressBar: severity === ToastType.Success,
-                positionClass: 'toast-bottom-right'
+                positionClass: 'toast-bottom-right',
+                enableHtml: true
             },
             severity
         );

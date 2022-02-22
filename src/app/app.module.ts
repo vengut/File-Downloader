@@ -19,14 +19,14 @@ import {MatToolbarModule} from "@angular/material/toolbar";
 import {MultiSelectModule} from "primeng/multiselect";
 import {RippleModule} from "primeng/ripple";
 import {BadgeModule} from "primeng/badge";
-import {ToastService} from "./services/toast.service";
-import {MessageService} from "primeng/api";
-import { ToastrModule } from 'ngx-toastr';
+import {ToastrModule} from 'ngx-toastr';
+import {ResponsesTableComponent} from './responses-table/responses-table.component';
 
 
 @NgModule({
     declarations: [
-        AppComponent
+        AppComponent,
+        ResponsesTableComponent
     ],
     imports: [
         MatIconModule,

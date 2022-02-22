@@ -1,0 +1,136 @@
+<p-table
+    #dt
+    [value]="responses"
+    dataKey="id"
+    [selectionPageOnly]="true"
+    [(selection)]="selectedResponses"
+    [paginator]="true"
+    [rows]="25"
+    [rowsPerPageOptions]="[10,25,50,100]"
+    [globalFilterFields]="[ 'url', 'type', 'tab' ]"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [rowHover]="true"
+    styleClass="p-datatable-gridlines"
+    [loading]="isLoading"
+    sortField="date"
+    [sortOrder]="-1"
+>
+    <ng-template pTemplate="caption">
+        <div class="row">
+            <div class="col-sm-2">
+                <p-button
+                    type="button"
+                    pRipple
+                    icon="pi pi-download"
+                    label="Download"
+                    styleClass="p-button-success"
+                    [badge]="selectedResponsesLength.toString()"
+                    (click)="downloadUrls()"
+                    [disabled]="!isDownloadsEnabled"
+                >
+                </p-button>
+            </div>
+            <div class="offset-sm-8 col-sm-2">
+                <span class="p-input-icon-left ml-auto">
+                    <i class="pi pi-search"></i>
+                    <input
+                        pInputText
+                        type="text"
+                        [(ngModel)]="globalFilter"
+                        (input)="dt.filterGlobal(globalFilter, 'contains')"
+                        placeholder="Search URLs"
+                    />
+                </span>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+        <tr>
+            <th rowspan="2">
+                <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+            </th>
+            <ng-container *ngFor="let col of columns">
+                <th *ngIf="col.sortable" [pSortableColumn]="col.field">
+                    {{ col.header}}
+                    <p-sortIcon [field]="col.field"></p-sortIcon>
+                </th>
+                <th *ngIf="!col.sortable">
+                    {{ col.header}}
+                </th>
+            </ng-container>
+            <th rowspan="2">Download</th>
+        </tr>
+        <tr>
+            <th>
+                <p-multiSelect
+                    [(ngModel)]="urlFilter"
+                    [options]="urlOptions"
+                    (onChange)="filterUrls()"
+                    placeholder="Any"
+                    [maxSelectedLabels]="1"
+                    [selectedItemsLabel]="'{0} items selected'"
+                >
+                </p-multiSelect>
+            </th>
+            <th>
+                <p-columnFilter type="date" field="date"></p-columnFilter>
+            </th>
+            <th>
+                <p-columnFilter field="type" matchMode="in" [showMenu]="false">
+                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                        <p-multiSelect
+                            [ngModel]="value"
+                            [options]="types"
+                            (onChange)="filter($event.value)"
+                            placeholder="Any"
+                            [maxSelectedLabels]="1"
+                            [selectedItemsLabel]="'{0} items selected'"
+                        >
+                        </p-multiSelect>
+                    </ng-template>
+                </p-columnFilter>
+            </th>
+            <th>
+                <p-columnFilter field="tab" matchMode="in" [showMenu]="false">
+                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                        <p-multiSelect
+                            [ngModel]="value"
+                            [options]="tabs"
+                            (onChange)="filter($event.value)"
+                            placeholder="Any"
+                            [maxSelectedLabels]="1"
+                            [selectedItemsLabel]="'{0} items selected'"
+                        >
+                        </p-multiSelect>
+                    </ng-template>
+                </p-columnFilter>
+            </th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-response>
+        <tr>
+            <td>
+                <p-tableCheckbox [value]="response"></p-tableCheckbox>
+            </td>
+            <td> {{ response.urlDisplay }}</td>
+            <td> {{ response.dateDisplay }}</td>
+            <td> {{ response.type }}</td>
+            <td> {{ response.tabDisplay }}</td>
+            <td style="text-align: center">
+                <button
+                    pButton
+                    type="button"
+                    class="p-button-secondary"
+                    icon="pi pi-download"
+                    (click)="downloadUrl(response)"
+                ></button>
+            </td>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+        <tr>
+            <td colspan="6" style="text-align: center">No Responses found.</td>
+        </tr>
+    </ng-template>
+</p-table>

@@ -1,4 +1,4 @@
-import {HttpResponseModel} from "./http-response.model";
+import {HttpResponseModel} from "./chrome-web-request.model";
 
 export interface ChromeStorageModel {
     isListening: boolean;

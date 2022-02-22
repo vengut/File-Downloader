@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {from, fromEventPattern, map, Observable, switchMap} from 'rxjs';
-import {HttpResponseModel} from './http-response.model';
+import {HttpResponseModel} from './chrome-web-request.model';
 import {ChromeStorageChangesModel, ChromeStorageKey, StorageNamespace} from "./chrome-storage.model";
 
 @Injectable({providedIn: 'root'})
