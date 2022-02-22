@@ -58,6 +58,7 @@ export class ChromeStorageService {
     }
 
     private setValue<T>(key: ChromeStorageKey, value: T): Observable<T> {
+        console.log(`Updated ${key}.`);
         return from(chrome.storage.local.set({ [key]: value })).pipe(
             map(() => value)
         );

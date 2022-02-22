@@ -36,9 +36,10 @@
                     <input
                         pInputText
                         type="text"
+                        class="p-column-filter-row"
                         [(ngModel)]="globalFilter"
                         (input)="dt.filterGlobal(globalFilter, 'contains')"
-                        placeholder="Search URLs"
+                        placeholder="Search Responses"
                     />
                 </span>
             </div>
@@ -63,8 +64,9 @@
         <tr>
             <th>
                 <p-multiSelect
+                    styleClass="p-column-filter-row"
                     [(ngModel)]="urlFilter"
-                    [options]="urlOptions"
+                    [options]="urlFilterOptions"
                     (onChange)="filterUrls()"
                     placeholder="Any"
                     [maxSelectedLabels]="1"
@@ -76,7 +78,7 @@
                 <p-columnFilter type="date" field="date"></p-columnFilter>
             </th>
             <th>
-                <p-columnFilter field="type" matchMode="in" [showMenu]="false">
+                <p-columnFilter field="type" matchMode="in" [showMenu]="true">
                     <ng-template pTemplate="filter" let-value let-filter="filterCallback">
                         <p-multiSelect
                             [ngModel]="value"
@@ -91,7 +93,7 @@
                 </p-columnFilter>
             </th>
             <th>
-                <p-columnFilter field="tab" matchMode="in" [showMenu]="false">
+                <p-columnFilter field="tab" matchMode="in" [showMenu]="true">
                     <ng-template pTemplate="filter" let-value let-filter="filterCallback">
                         <p-multiSelect
                             [ngModel]="value"

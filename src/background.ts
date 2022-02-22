@@ -5,11 +5,6 @@ chrome.action.onClicked.addListener((_tab) => {
     chrome.runtime.openOptionsPage();
 });
 
-chrome.runtime.onStartup.addListener(function () {
-    chrome.storage.local.set({[ChromeStorageKey.IsListening]: false, [ChromeStorageKey.Responses]: []})
-        .then(() => console.log(`Startup`));
-});
-
 chrome.webNavigation.onBeforeNavigate.addListener(() =>{
     chrome.webRequest.onResponseStarted.addListener((responseDetails) => {
             chrome.storage.local.get([ChromeStorageKey.IsListening, ChromeStorageKey.Responses]).then((result) => {
@@ -61,6 +56,6 @@ function updateResponses(responses: HttpResponseModel[], response: HttpResponseM
     responses = [...responses, response];
 
     chrome.storage.local.set({responses: responses}, function () {
-        console.log(`Updated: ${responses && responses.length}`);
+        console.log(`Updated responses.`);
     });
 }

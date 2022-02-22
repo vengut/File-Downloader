@@ -1,7 +1,7 @@
-import {AfterViewInit, Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
-import {distinct, getExtension, getPathName} from "../utilities";
+import {containedInList, distinct, getExtension, getPathName} from "../utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./responses-table.model";
 import {Table} from "primeng/table";
 import {FilterService} from "primeng/api";
@@ -10,17 +10,16 @@ import {DatePipe} from "@angular/common";
 import {groupBy, orderBy} from "lodash"
 import {concatMap, delay, finalize, from, of} from "rxjs";
 import {ToastService, ToastType} from "../services/toast.service";
-import { ChromeDownloadsService } from '../services/chrome/chrome-downloads.service';
+import {ChromeDownloadsService} from '../services/chrome/chrome-downloads.service';
 
 @Component({
     selector: 'responses-table',
     templateUrl: 'responses-table.component.html'
 })
 
-export class ResponsesTableComponent implements AfterViewInit {
+export class ResponsesTableComponent {
     public readonly MAX_CHARACTER_COUNT: number = 69;
     public readonly DATE_FORMAT: string = 'medium';
-    public readonly DEFAULT_URL_FILTER: string = '.mp3';
     public readonly DOWNLOAD_DELAY: number = 2000;
 
     @Input() public isListening: boolean = false;
@@ -32,7 +31,7 @@ export class ResponsesTableComponent implements AfterViewInit {
 
     public columns: HttpResponseTableColumn[] = [];
     public globalFilter: string = "";
-    public urlFilter: string[] = [this.DEFAULT_URL_FILTER];
+    public urlFilter: string[] = [];
     public selectedResponses: HttpResponseTableModel[] = [];
 
     public get responses(): HttpResponseTableModel[] {
@@ -48,7 +47,7 @@ export class ResponsesTableComponent implements AfterViewInit {
         }));
     }
 
-    public get urlOptions(): SelectItem[] {
+    public get urlFilterOptions(): SelectItem[] {
         return [
             { value: '.mp3', label: 'MP3'},
             { value: '.m3u8', label: 'HLS' },
@@ -91,17 +90,7 @@ export class ResponsesTableComponent implements AfterViewInit {
             { field: 'tab', header: 'Tab', sortable: true },
         ];
 
-        this.filterService.register('incontains',(value: string, filter: string[]): boolean => {
-            return filter.some(f => value.toLowerCase().includes(f.toLowerCase()));
-        });
-    }
-
-    ngAfterViewInit() {
-        this.filterUrls();
-    }
-
-    public filterUrls() {
-        this.table.filter(this.urlFilter, 'url', 'incontains');
+        this.filterService.register('containedInList', (value: string, filters: string[]): boolean => containedInList(value, filters));
     }
 
     public downloadUrl(response: HttpResponseTableModel, saveAs: boolean = true) {
@@ -111,8 +100,8 @@ export class ResponsesTableComponent implements AfterViewInit {
 
         this.chromeDownloadsService.downloadFile(response.url, fullFileName, saveAs).subscribe({
             next: (downloadId) => {
-                console.log(`Download Started: ${downloadId}`);
                 if (!saveAs) {
+                    console.log(`Download Started: ${downloadId}`);
                     this.toastService.toast(ToastType.Success, "Download Started", `File Name: ${fileName.substring(0, 50)}.${extension}<br/>Date: ${response.dateDisplay}`);
                 }
             },
@@ -143,6 +132,10 @@ export class ResponsesTableComponent implements AfterViewInit {
         });
 
         this.selectedResponses = [];
+    }
+
+    public filterUrls() {
+        this.table.filter(this.urlFilter, 'url', 'containedInList');
     }
 
     private updateIsLoading(isLoading: boolean) {

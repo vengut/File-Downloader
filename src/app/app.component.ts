@@ -2,7 +2,6 @@ import {Component, OnInit} from '@angular/core';
 import {ChromeStorageService} from './services/chrome/chrome-storage.service';
 import {HttpResponseModel} from "./services/chrome/chrome-web-request.model";
 
-
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
@@ -11,6 +10,7 @@ import {HttpResponseModel} from "./services/chrome/chrome-web-request.model";
 export class AppComponent implements OnInit {
     public isLoading: boolean = false;
     public isListening: boolean = false;
+    public defaultURLFilter: string[] = [];
 
     public responses: HttpResponseModel[] = [];
 
@@ -28,7 +28,7 @@ export class AppComponent implements OnInit {
         });
 
         this.chromeStorageService.getStorageUpdates().subscribe((changes) => {
-            console.log(`Storage change made.`);
+            console.log(`UI Storage Update.`);
 
             if (changes.isListeningChange) {
                 this.isListening = changes.isListeningChange;
