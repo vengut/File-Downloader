@@ -7,8 +7,8 @@
     <div class="p-buttonset">
         <p-toggleButton
             [(ngModel)]="isListening"
-            onLabel="Listening"
-            offLabel="Listen"
+            [offLabel]="offListeningLabel"
+            [onLabel]="onListeningLabel"
             onIcon="pi pi-spin pi-spinner"
             offIcon="pi pi-sync"
             (onChange)="toggleListener()"

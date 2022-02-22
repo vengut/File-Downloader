@@ -14,6 +14,26 @@ export class AppComponent implements OnInit {
 
     public responses: HttpResponseModel[] = [];
 
+    public get responsesLength(): number {
+        if (this.responses) {
+            return this.responses.length;
+        }
+
+        return 0;
+    }
+
+    public get offListeningLabel(): string {
+        if (this.responsesLength > 0) {
+            return `Listen (${this.responsesLength})`;
+        }
+
+        return `Listen`;
+    }
+
+    public get onListeningLabel(): string {
+        return `Listening (${this.responsesLength})`;
+    }
+
     constructor(
         private chromeStorageService: ChromeStorageService
     ) { }
