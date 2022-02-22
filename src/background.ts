@@ -1,32 +1,22 @@
 import {HttpResponseModel} from "./app/services/http-response.model";
-import tabId = chrome.devtools.inspectedWindow.tabId;
+import {ChromeStorageKey} from "./app/services/chrome-storage.model";
 
 chrome.action.onClicked.addListener((_tab) => {
     chrome.runtime.openOptionsPage();
 });
 
 chrome.runtime.onStartup.addListener(function () {
-    chrome.storage.local.set({isListening: false, responses: []})
+    chrome.storage.local.set({[ChromeStorageKey.IsListening]: false, [ChromeStorageKey.Responses]: []})
         .then(() => console.log(`Startup`));
 });
 
-chrome.runtime.onMessage.addListener((_toggleHttpListener, _sender, _sendResponse) => {
-    chrome.storage.local.get("isListening").then((result) => {
-        let isListening: boolean = result["isListening"];
-        isListening = !isListening;
-
-        chrome.storage.local.set({isListening: isListening}).then(() => {
-            console.log(`Toggled HTTP Request Listener: ${isListening}`);
-        });
-    });
-});
 chrome.webNavigation.onBeforeNavigate.addListener(() =>{
     chrome.webRequest.onResponseStarted.addListener((responseDetails) => {
-            chrome.storage.local.get(["isListening", "responses"]).then((result) => {
-                let isListening: boolean = result["isListening"];
+            chrome.storage.local.get([ChromeStorageKey.IsListening, ChromeStorageKey.Responses]).then((result) => {
+                let isListening: boolean = result[ChromeStorageKey.IsListening];
 
                 if (isListening) {
-                    let responses = result["responses"];
+                    let responses = result[ChromeStorageKey.Responses];
 
                     if (responses === undefined || responses === null) {
                         responses = [];

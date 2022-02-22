@@ -4,7 +4,7 @@
     </button>
     <span>Sniffer</span>
     <span style="flex: 1 1 auto;"></span>
-    <div class="p-buttonset" *ngIf="!isLoading">
+    <div class="p-buttonset">
         <p-toggleButton
             [(ngModel)]="isListening"
             onLabel="Listening"
@@ -12,18 +12,9 @@
             onIcon="pi pi-spin pi-spinner"
             offIcon="pi pi-sync"
             (onChange)="toggleListener()"
+            [disabled]="isLoading"
         >
         </p-toggleButton>
-        <button
-            pButton
-            pRipple
-            type="button"
-            icon="pi pi-refresh"
-            label="Refresh"
-            class="p-button-success"
-            (click)="setResponses()"
-        >
-        </button>
         <button
             pButton
             pRipple
@@ -32,6 +23,7 @@
             label="Clear"
             class="p-button-danger"
             (click)="clearResponses()"
+            [disabled]="isLoading"
         >
         </button>
     </div>
@@ -44,7 +36,7 @@
     [selectionPageOnly]="true"
     [(selection)]="selectedResponses"
     [paginator]="true"
-    [rows]="20"
+    [rows]="25"
     [rowsPerPageOptions]="[10,25,50,100]"
     [globalFilterFields]="[ 'url', 'type', 'tab' ]"
     [showCurrentPageReport]="true"
@@ -169,7 +161,7 @@
     </ng-template>
     <ng-template pTemplate="emptymessage">
         <tr>
-            <td colspan="6">No Responses found.</td>
+            <td colspan="6" style="text-align: center">No Responses found.</td>
         </tr>
     </ng-template>
 </p-table>

@@ -1,7 +1,6 @@
 import {AfterViewInit, Component, NgZone, OnInit, ViewChild} from '@angular/core';
-import {ChromeRuntimeService} from './services/chrome-runtime.service';
 import {ChromeStorageService} from './services/chrome-storage.service';
-import {ResourceTypes} from "./services/http-response.model";
+import {HttpResponseModel, ResourceTypes} from "./services/http-response.model";
 import {SelectItem} from "primeng/api/selectitem";
 import {distinct, getExtension, getPathName} from "./utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./app.model";
@@ -10,7 +9,7 @@ import {FilterService, MessageService} from "primeng/api";
 import sanitize from "sanitize-filename";
 import {DatePipe} from "@angular/common";
 import {groupBy, orderBy} from "lodash"
-import {concatMap, delay, finalize, from, of, tap} from "rxjs";
+import {concatMap, delay, finalize, forkJoin, from, of, tap} from "rxjs";
 import {ToastService, ToastType} from "./services/toast.service";
 
 
@@ -67,7 +66,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
 
     constructor(
-        private chromeRuntimeService: ChromeRuntimeService,
         private chromeStorageService: ChromeStorageService,
         private filterService: FilterService,
         private toastService: ToastService
@@ -82,13 +80,29 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.filterService.register('incontains',(value: string, filter: string[]): boolean => {
             return filter.some(f => value.toLowerCase().includes(f.toLowerCase()));
         });
+
+
     }
 
     ngOnInit() {
-        this.setIsListening();
-        this.setResponses();
-        chrome.runtime.onMessage.addListener(() =>{
-            this.setIsListening();
+        this.chromeStorageService.getIsListening().subscribe((isListening) => {
+            this.isListening = isListening;
+        });
+
+        this.chromeStorageService.getResponses().subscribe((responses) => {
+            this.responses = this.mapResponsesToTableModel(responses);
+        });
+
+        this.chromeStorageService.getStorageUpdates().subscribe((changes) => {
+            console.log(`Changes: ${JSON.stringify(changes)}`);
+
+            if (changes.isListeningChange) {
+                this.isListening = changes.isListeningChange;
+            }
+
+            if (changes.responsesChange) {
+                this.responses = this.mapResponsesToTableModel(changes.responsesChange);
+            }
         });
     }
 
@@ -101,37 +115,14 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
 
     public toggleListener() {
-        this.chromeRuntimeService.toggleListener();
-        this.setResponses();
+        this.isLoading = true;
+        this.chromeStorageService.toggleListener().subscribe(() => this.isLoading = false);
     }
 
     public clearResponses() {
-        this.chromeStorageService.clearResponses();
-        this.setResponses();
+        this.isLoading = true;
+        this.chromeStorageService.clearResponses().subscribe(() => this.isLoading = false);;
     }
-
-    public setIsListening() {
-        this.chromeStorageService.getIsListening().subscribe((isListening) => {
-            this.isListening = isListening;
-        });
-    }
-
-    public setResponses() {
-        this.chromeStorageService.getResponses()
-            .subscribe(responses => {
-                this.responses = responses.map(r => ({
-                    id: r.id,
-                    url: r.url,
-                    urlDisplay: this.getURLDisplay(r.url),
-                    type: r.type,
-                    date: new Date(r.timestamp),
-                    dateDisplay: this.getDateDisplay(r.timestamp),
-                    tab: r.tab,
-                    tabDisplay: this.getTabDisplay(r.tab)
-                }));
-            });
-    }
-
 
     public downloadUrl(response: HttpResponseTableModel) {
         const fileName = sanitize(response.tab);
@@ -173,6 +164,19 @@ export class AppComponent implements OnInit, AfterViewInit {
         });
 
         this.selectedResponses = [];
+    }
+
+    private mapResponsesToTableModel(responses: HttpResponseModel[]): HttpResponseTableModel[] {
+        return responses.map(r => ({
+            id: r.id,
+            url: r.url,
+            urlDisplay: this.getURLDisplay(r.url),
+            type: r.type,
+            date: new Date(r.timestamp),
+            dateDisplay: this.getDateDisplay(r.timestamp),
+            tab: r.tab,
+            tabDisplay: this.getTabDisplay(r.tab)
+        }));
     }
 
     private getDateDisplay(timestamp: number, format: string = this.DATE_FORMAT): string {
