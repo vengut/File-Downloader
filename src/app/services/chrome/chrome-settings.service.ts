@@ -9,7 +9,7 @@ import {
     mergeMap,
     concat,
     windowTime,
-    mergeAll
+    mergeAll, filter, distinctUntilChanged
 } from 'rxjs';
 import {ChromeSettingsKey, ChromeSettingsModel} from './chrome-settings.model';
 import {StorageNamespace} from "./chrome-storage.model";
@@ -17,7 +17,6 @@ import {isEqual} from "lodash";
 
 @Injectable({providedIn: 'root'})
 export class ChromeSettingsService {
-    public static readonly DEFAULT_POLLING_RATE: number = 10;
     constructor() { }
 
     public getEventStream() {
@@ -28,9 +27,6 @@ export class ChromeSettingsService {
                 const settings: ChromeSettingsModel = {};
 
                 if (namespace === 'sync') {
-                    if (changes.hasOwnProperty(ChromeSettingsKey.PollingRate)) {
-                        settings.pollingRate = changes[ChromeSettingsKey.PollingRate].newValue ?? ChromeSettingsService.DEFAULT_POLLING_RATE;
-                    }
 
                     if (changes.hasOwnProperty(ChromeSettingsKey.UrlFilter)) {
                         settings.urlFilter = changes[ChromeSettingsKey.UrlFilter].newValue ?? [];
@@ -40,7 +36,7 @@ export class ChromeSettingsService {
                 return settings;
             }
         )
-        .pipe(map(settings => settings.urlFilter !== undefined || settings.pollingRate !== undefined));
+        .pipe(filter(settings => settings.urlFilter !== undefined));
     }
 
     public getAll() {
@@ -48,20 +44,9 @@ export class ChromeSettingsService {
             from(this.getSyncStorage()),
             this.getEventStream().pipe(mergeMap(() => this.getSyncStorage())),
         ).pipe(
+            distinctUntilChanged((a, b) => isEqual(a, b)),
             windowTime(3000),
             mergeAll()
-        );
-    }
-
-    public setPollingRate(newPollingRate: number): Observable<number> {
-        return this.getPollingRate().pipe(
-            switchMap(oldPollingRate => {
-                if (oldPollingRate === newPollingRate) {
-                    return of(oldPollingRate);
-                }
-
-                return this.setSetting<number>(ChromeSettingsKey.PollingRate, newPollingRate === undefined || newPollingRate === null ? ChromeSettingsService.DEFAULT_POLLING_RATE : newPollingRate);
-            })
         );
     }
 
@@ -78,13 +63,7 @@ export class ChromeSettingsService {
 
     }
 
-    private getPollingRate(): Observable<number> {
-        return this.getSetting<number>(ChromeSettingsKey.PollingRate).pipe(
-            map(pollingRate => pollingRate === null || pollingRate === undefined ? ChromeSettingsService.DEFAULT_POLLING_RATE : pollingRate)
-        );
-    }
-
-    private getUrlFilter(): Observable<string[]> {
+    public getUrlFilter(): Observable<string[]> {
         return this.getSetting<string[]>(ChromeSettingsKey.UrlFilter).pipe(
             map(urlFilter => urlFilter === null || urlFilter === undefined ? [] : urlFilter)
         );

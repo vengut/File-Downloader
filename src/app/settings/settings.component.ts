@@ -1,7 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {FormControl, Validators} from '@angular/forms';
 import { ChromeSettingsService } from '../services/chrome/chrome-settings.service';
-import {concatMap} from "rxjs";
 
 @Component({
     selector: 'settings',
@@ -9,28 +7,22 @@ import {concatMap} from "rxjs";
 })
 
 export class SettingsComponent implements OnInit {
-    public readonly MIN_POLLING_RATE = 10;
-    public readonly MAX_POLLING_RATE = 100;
-    public pollingRateFormControl: FormControl;
+    public urlFilter!: string[];
+
+    public get urlFilterJson(): string {
+        return JSON.stringify(this.urlFilter);
+    }
 
     constructor(
         private chromeSettingsService: ChromeSettingsService
     ) {
-        this.pollingRateFormControl = new FormControl(
-            ChromeSettingsService.DEFAULT_POLLING_RATE,
-            [ Validators.min(this.MIN_POLLING_RATE), Validators.max(this.MAX_POLLING_RATE) ]
-        );
     }
 
     ngOnInit() {
         this.chromeSettingsService.getAll().subscribe(settings => {
-            if (settings.pollingRate) {
-                this.pollingRateFormControl.setValue(settings.pollingRate);
+            if (settings.urlFilter) {
+                this.urlFilter = settings.urlFilter;
             }
         });
-
-       this.pollingRateFormControl.valueChanges.pipe(
-           concatMap((newPollingRate: number) => this.chromeSettingsService.setPollingRate(newPollingRate))
-       ).subscribe();
     }
 }

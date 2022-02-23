@@ -12,7 +12,7 @@ import {FormControl} from "@angular/forms";
 export class AppComponent implements OnInit {
     public isListeningFormControl: FormControl = new FormControl(false);
     public responses: HttpResponseModel[] = [];
-    
+
     public get responsesLength(): number {
         if (this.responses) {
             return this.responses.length;

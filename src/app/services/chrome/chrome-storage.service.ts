@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {
-    concat, filter,
+    concat, distinctUntilChanged, filter,
     from,
     fromEventPattern,
     map, mergeAll, mergeMap,
@@ -15,6 +15,7 @@ import {
     StorageNamespace
 } from "./chrome-storage.model";
 import {ChromeSettingsService} from "./chrome-settings.service";
+import {isEqual} from "lodash";
 
 @Injectable({providedIn: 'root'})
 export class ChromeStorageService {
@@ -49,6 +50,7 @@ export class ChromeStorageService {
             from(this.getLocalStorage()),
             this.getEventStream().pipe(mergeMap(() => this.getLocalStorage())),
         ).pipe(
+            distinctUntilChanged((a, b) => isEqual(a, b)),
             windowTime(3000),
             mergeAll()
         );

@@ -9,6 +9,10 @@ export function getPathName(url: string): string {
 }
 
 export function containedInList(value: string, filters: string[]): boolean {
+    if (filters === undefined) {
+        return true;
+    }
+
     return filters.some(filter => value.toLowerCase().includes(filter.toLowerCase()));
 }
 

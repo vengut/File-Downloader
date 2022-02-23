@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
 import {containedInList, distinct, FileName, getPathName} from "../utilities";
@@ -35,7 +35,7 @@ export class ResponsesTableComponent implements OnInit {
     public selectedResponses: HttpResponseTableModel[] = [];
 
     public get urlFilter(): string[] {
-        return this.urlFilterFormControl.value ?? [];
+        return this.urlFilterFormControl.value;
     }
 
     public get urlFilterOptions(): SelectItem[] {
@@ -88,6 +88,10 @@ export class ResponsesTableComponent implements OnInit {
     }
 
     ngOnInit() {
+        this.chromeSettingsService.getUrlFilter().subscribe((urlFilter)=> {
+            this.filterUrls(urlFilter);
+        });
+
         this.chromeStorageService.getAll()
             .subscribe(storage => {
                 if (storage.responses) {
@@ -103,9 +107,14 @@ export class ResponsesTableComponent implements OnInit {
 
         this.urlFilterFormControl.valueChanges.pipe(
             mergeMap((urlFilter: string[]) => this.chromeSettingsService.setUrlFilter(urlFilter))
-        ).subscribe((urlFilter) => {
-            this.filterUrls(urlFilter);
-        });
+        ).subscribe();
+    }
+
+    public filterUrls(urlFilter?: string[]) {
+        if (urlFilter === undefined) {
+            urlFilter = this.urlFilter;
+        }
+        this.table.filter(urlFilter, 'url', 'containedInList');
     }
 
     public downloadUrl(response: HttpResponseTableModel, saveAs: boolean = true) {
@@ -158,10 +167,6 @@ export class ResponsesTableComponent implements OnInit {
         else {
             this.toastService.toast(ToastType.Warn, "Command", command, 30000, false);
         }
-    }
-
-    public filterUrls(urlFilter: string[]) {
-        this.table.filter(urlFilter, 'url', 'containedInList');
     }
 
     private mapResponsesToTableModel(responseData: HttpResponseModel[]): HttpResponseTableModel[] {

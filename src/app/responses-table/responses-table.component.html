@@ -67,6 +67,7 @@
                         [formControl]="urlFilterFormControl"
                         styleClass="p-column-filter-row"
                         [options]="urlFilterOptions"
+                        (onChange)="filterUrls($event.value)"
                         placeholder="Any"
                         [maxSelectedLabels]="1"
                         [selectedItemsLabel]="'{0} items selected'"
