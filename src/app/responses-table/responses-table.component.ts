@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
 import {containedInList, distinct, FileName, getPathName} from "../utilities";
@@ -7,44 +7,35 @@ import {Table} from "primeng/table";
 import {FilterService} from "primeng/api";
 import {DatePipe} from "@angular/common";
 import {groupBy, orderBy} from "lodash"
-import {concatMap, delay, finalize, from, of} from "rxjs";
+import {concatMap, delay, finalize, from, mergeMap, of} from "rxjs";
 import {ToastService, ToastType} from "../services/toast.service";
 import {ChromeDownloadsService} from '../services/chrome/chrome-downloads.service';
 import {ChromeSettingsService} from '../services/chrome/chrome-settings.service';
 import {Clipboard} from "@angular/cdk/clipboard";
+import {ChromeStorageService} from "../services/chrome/chrome-storage.service";
+import {FormControl} from "@angular/forms";
 
 @Component({
     selector: 'responses-table',
     templateUrl: 'responses-table.component.html'
 })
-export class ResponsesTableComponent implements AfterViewInit {
+export class ResponsesTableComponent implements OnInit {
     public readonly MAX_CHARACTER_COUNT: number = 69;
     public readonly DATE_FORMAT: string = 'medium';
     public readonly DOWNLOAD_DELAY: number = 2000;
 
-    @Input() public isListening: boolean = false;
-    @Input() public isLoading: boolean = false;
-    @Output() public isLoadingChange: EventEmitter<boolean> = new EventEmitter<boolean>(false);
-    @Input() public responseData: HttpResponseModel[] = [];
+    public isLoading: boolean = false;
+    public responses: HttpResponseTableModel[] = [];
 
     @ViewChild('dt', {static: false}) public table!: Table;
 
     public columns: HttpResponseTableColumn[] = [];
     public globalFilter: string = "";
-    public urlFilter: string[] = [];
+    public urlFilterFormControl: FormControl = new FormControl(undefined);
     public selectedResponses: HttpResponseTableModel[] = [];
 
-    public get responses(): HttpResponseTableModel[] {
-        return this.responseData.map(r => ({
-            id: r.id,
-            url: r.url,
-            urlDisplay: this.getURLDisplay(r.url),
-            type: r.type,
-            date: new Date(r.timestamp),
-            dateDisplay: this.getDateDisplay(r.timestamp),
-            tab: r.tab,
-            tabDisplay: this.getTabDisplay(r.tab)
-        }));
+    public get urlFilter(): string[] {
+        return this.urlFilterFormControl.value ?? [];
     }
 
     public get urlFilterOptions(): SelectItem[] {
@@ -79,6 +70,7 @@ export class ResponsesTableComponent implements AfterViewInit {
     }
 
     constructor(
+        private chromeStorageService: ChromeStorageService,
         private chromeSettingsService: ChromeSettingsService,
         private filterService: FilterService,
         private chromeDownloadsService: ChromeDownloadsService,
@@ -95,10 +87,24 @@ export class ResponsesTableComponent implements AfterViewInit {
         this.filterService.register('containedInList', (value: string, filters: string[]): boolean => containedInList(value, filters));
     }
 
-    ngAfterViewInit() {
-        this.chromeSettingsService.getUrlFilter().subscribe(urlFilter => {
-            this.urlFilter = urlFilter;
-            this.filterUrls();
+    ngOnInit() {
+        this.chromeStorageService.getAll()
+            .subscribe(storage => {
+                if (storage.responses) {
+                    this.responses = this.mapResponsesToTableModel(storage.responses);
+                }
+            });
+
+        this.chromeSettingsService.getAll().subscribe(settings => {
+            if (settings.urlFilter) {
+                this.urlFilterFormControl.setValue(settings.urlFilter);
+            }
+        });
+
+        this.urlFilterFormControl.valueChanges.pipe(
+            mergeMap((urlFilter: string[]) => this.chromeSettingsService.setUrlFilter(urlFilter))
+        ).subscribe((urlFilter) => {
+            this.filterUrls(urlFilter);
         });
     }
 
@@ -119,7 +125,7 @@ export class ResponsesTableComponent implements AfterViewInit {
     }
 
     public downloadUrls() {
-        this.updateIsLoading(true);
+        this.isLoading = true;
 
         const groupedResponses = groupBy(this.selectedResponses, a => a.urlDisplay);
 
@@ -132,7 +138,7 @@ export class ResponsesTableComponent implements AfterViewInit {
 
         from(uniqueResponses).pipe(
             concatMap(response => of(response).pipe(delay(this.DOWNLOAD_DELAY))),
-            finalize(() => this.updateIsLoading(false))
+            finalize(() => this.isLoading = false)
         ).subscribe(response =>{
             this.downloadUrl(response, false);
         });
@@ -143,7 +149,7 @@ export class ResponsesTableComponent implements AfterViewInit {
     public streamUrl(response: HttpResponseTableModel) {
         const file = new FileName(response.url, response.tab);
 
-        const command = `streamlink "hlsvariant://${response.url} name_key=bitrate" best -o ${file.name}.ts`;
+        const command = `streamlink "hlsvariant://${response.url} name_key=bitrate" best -o "${file.name}.ts"`;
 
         const isCopied = this.clipboard.copy(command);
         if (isCopied) {
@@ -154,14 +160,21 @@ export class ResponsesTableComponent implements AfterViewInit {
         }
     }
 
-    public filterUrls() {
-        this.table.filter(this.urlFilter, 'url', 'containedInList');
-        this.chromeSettingsService.setUrlFilterSetting(this.urlFilter);
+    public filterUrls(urlFilter: string[]) {
+        this.table.filter(urlFilter, 'url', 'containedInList');
     }
 
-    private updateIsLoading(isLoading: boolean) {
-        this.isLoading = isLoading;
-        this.isLoadingChange.emit(isLoading);
+    private mapResponsesToTableModel(responseData: HttpResponseModel[]): HttpResponseTableModel[] {
+        return responseData.map(r => ({
+            id: r.id,
+            url: r.url,
+            urlDisplay: this.getURLDisplay(r.url),
+            type: r.type,
+            date: new Date(r.timestamp),
+            dateDisplay: this.getDateDisplay(r.timestamp),
+            tab: r.tab,
+            tabDisplay: this.getTabDisplay(r.tab)
+        }));
     }
 
     private getDateDisplay(timestamp: number, format: string = this.DATE_FORMAT): string {

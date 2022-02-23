@@ -1,0 +1,13 @@
+<p-card>
+    <div class="col-sm-4 offset-sm-4">
+        <p-inputNumber
+            [formControl]="pollingRateFormControl"
+            inputId="pollingRate"
+            suffix=" s"
+            [min]="MIN_POLLING_RATE"
+            [max]="MAX_POLLING_RATE"
+            [step]="10"
+        >
+        </p-inputNumber>
+    </div>
+</p-card>

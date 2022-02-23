@@ -7,7 +7,7 @@ import {ButtonModule} from 'primeng/button';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {ToggleButtonModule} from 'primeng/togglebutton';
-import {FormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {TableModule} from 'primeng/table';
 import {ToolbarModule} from "primeng/toolbar";
@@ -22,12 +22,18 @@ import {BadgeModule} from "primeng/badge";
 import {ToastrModule} from 'ngx-toastr';
 import {ResponsesTableComponent} from './responses-table/responses-table.component';
 import {InputNumberModule} from "primeng/inputnumber";
+import {MatMenuModule} from "@angular/material/menu";
+import {MatSidenavModule} from "@angular/material/sidenav";
+import {MatListModule} from "@angular/material/list";
+import { SettingsComponent } from './settings/settings.component';
+import {SliderModule} from "primeng/slider";
 
 
 @NgModule({
     declarations: [
         AppComponent,
-        ResponsesTableComponent
+        ResponsesTableComponent,
+        SettingsComponent
     ],
     imports: [
         MatIconModule,
@@ -49,7 +55,12 @@ import {InputNumberModule} from "primeng/inputnumber";
         RippleModule,
         BadgeModule,
         ToastrModule.forRoot(),
-        InputNumberModule
+        InputNumberModule,
+        MatMenuModule,
+        MatSidenavModule,
+        MatListModule,
+        SliderModule,
+        ReactiveFormsModule
     ],
     providers: [],
     bootstrap: [AppComponent]

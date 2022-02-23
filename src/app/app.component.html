@@ -1,68 +1,55 @@
-<mat-toolbar color="primary">
-    <button mat-icon-button>
+<mat-toolbar color="primary" style="min-height: 50px;height: 8vh;">
+    <button
+        mat-icon-button
+        (click)="sidenav.toggle()"
+    >
         <mat-icon>menu</mat-icon>
     </button>
     <span>Sniffer</span>
     <span style="flex: 1 1 auto;"></span>
-    <div class="row">
-        <div class ="col-sm-4 offset-sm-1 me-1">
-            <div class="p-inputgroup">
-                <button
-                    pButton
-                    pRipple
-                    type="button"
-                    icon="pi pi-refresh"
-                    class="p-button-success"
-                    (click)="refreshTable()"
-                >
-                </button>
-                <p-inputNumber
-                    inputId="pollingRate"
-                    [(ngModel)]="pollingRate"
-                    (onInput)="updatePollingRate($event.value)"
-                    [showButtons]="true"
-                    mode="decimal"
-                    suffix=" s"
-                    [min]="1"
-                    [max]="100"
-                    incrementButtonClass="p-button-success"
-                    decrementButtonClass="p-button-success"
-                >
-                </p-inputNumber>
-            </div>
-        </div>
-        <div class="col-sm-6">
-            <div class="p-buttonset">
-                <p-toggleButton
-                    [ngModel]="isListening"
-                    [offLabel]="offListeningLabel"
-                    [onLabel]="onListeningLabel"
-                    onIcon="pi pi-spin pi-spinner"
-                    offIcon="pi pi-sync"
-                    (click)="toggleListener()"
-                    [disabled]="isLoading"
-                >
-                </p-toggleButton>
-                <button
-                    pButton
-                    pRipple
-                    type="button"
-                    icon="pi pi-times"
-                    label="Clear"
-                    class="p-button-danger"
-                    (click)="clearResponses()"
-                    [disabled]="isLoading"
-                >
-                </button>
-            </div>
-        </div>
+    <div class="p-buttonset">
+        <p-toggleButton
+            [formControl]="isListeningFormControl"
+            [offLabel]="offListeningLabel"
+            [onLabel]="onListeningLabel"
+            onIcon="pi pi-spin pi-spinner"
+            offIcon="pi pi-sync"
+        >
+        </p-toggleButton>
+        <button
+            pButton
+            pRipple
+            type="button"
+            icon="pi pi-times"
+            label="Clear"
+            class="p-button-danger"
+            (click)="clearResponses()"
+        >
+        </button>
     </div>
 </mat-toolbar>
 
-
-<responses-table
-    [responseData]="responses"
-    [isListening]="isListening"
-    [(isLoading)]="isLoading"
->
-</responses-table>
+<mat-sidenav-container>
+    <mat-sidenav
+        #sidenav
+        mode="over"
+    >
+        <mat-nav-list
+            style="width: 15vw; min-width: 150px;"
+        >
+            <a mat-list-item routerLink="" routerLinkActive="active" (click)="sidenav.toggle(false)">
+                <mat-icon mat-list-icon>home</mat-icon>
+                <div mat-line>Home</div>
+            </a>
+            <a mat-list-item routerLink="settings" routerLinkActive="active" (click)="sidenav.toggle(false)">
+                <mat-icon mat-list-icon>settings</mat-icon>
+                <div mat-line>Settings</div>
+            </a>
+        </mat-nav-list>
+    </mat-sidenav>
+    <mat-sidenav-content>
+        <mat-card style="min-height: 92vh;">
+            <router-outlet></router-outlet>
+        </mat-card>
+    </mat-sidenav-content>
+</mat-sidenav-container>
