@@ -28,6 +28,9 @@ import {MatListModule} from "@angular/material/list";
 import { SettingsComponent } from './settings/settings.component';
 import {SliderModule} from "primeng/slider";
 import {SplitButtonModule} from "primeng/splitbutton";
+import {InputTextareaModule} from "primeng/inputtextarea";
+import {MatFormFieldModule} from "@angular/material/form-field";
+import {MatInputModule} from "@angular/material/input";
 
 
 @NgModule({
@@ -62,7 +65,10 @@ import {SplitButtonModule} from "primeng/splitbutton";
         MatListModule,
         SliderModule,
         ReactiveFormsModule,
-        SplitButtonModule
+        SplitButtonModule,
+        InputTextareaModule,
+        MatFormFieldModule,
+        MatInputModule
     ],
     providers: [],
     bootstrap: [AppComponent]
