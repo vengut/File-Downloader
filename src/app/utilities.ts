@@ -1,5 +1,13 @@
 import sanitize from "sanitize-filename";
 
+export function prettyPrintObject<T>(obj: T){
+    return JSON.stringify(obj, null, 4)
+}
+
+export function prettyPrintJson(json: string) {
+    return prettyPrintObject(JSON.parse(json));
+}
+
 export function distinct<T>(list: T[]): T[] {
     return Array.from(new Set([... list]));
 }

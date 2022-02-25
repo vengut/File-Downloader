@@ -1,8 +1,11 @@
 import {Component, OnInit } from '@angular/core';
 import { ChromeSettingsService } from '../services/chrome/chrome-settings.service';
-import {FormControl} from "@angular/forms";
+import {FormControl, FormControlStatus} from "@angular/forms";
 import { SelectItemList, SelectItemListSchema } from './settings.model';
 import { JsonTypeValidator } from '../services/zod-extensions';
+import {combineLatest, concatMap, debounceTime, distinctUntilChanged, of} from "rxjs";
+import {prettyPrintJson, prettyPrintObject} from "../utilities";
+import {isEqual} from "lodash";
 
 @Component({
     selector: 'settings',
@@ -11,9 +14,7 @@ import { JsonTypeValidator } from '../services/zod-extensions';
 
 export class SettingsComponent implements OnInit {
     public urlFilterOptions: SelectItemList = [
-        { value: '.mp3', label: 'MP3', isSelected: true },
-        { value: '.m3u8', label: 'HLS' },
-        { value: '.mp4', label: 'MP4' },
+
     ];
 
     public urlFilterOptionsFormControl: FormControl;
@@ -37,11 +38,29 @@ export class SettingsComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.chromeSettingsService.getSettingsChanges().subscribe(settings => {
-            if (settings.urlFilter) {
-                console.log(settings.urlFilter);
+        this.chromeSettingsService.getUrlFilterOptions().subscribe(urlFilterOptions => {
+            if (urlFilterOptions) {
+                this.urlFilterOptionsFormControl.setValue(prettyPrintObject(urlFilterOptions));
             }
         });
+
+        combineLatest([
+            this.urlFilterOptionsFormControl.valueChanges,
+            this.urlFilterOptionsFormControl.statusChanges,
+        ]).pipe(
+            debounceTime(1000),
+            distinctUntilChanged((_old, _new) => isEqual(_old, _new)),
+            concatMap(([json, status]: [string, FormControlStatus]) => {
+                if (status === 'VALID') {
+                    this.urlFilterOptionsFormControl.setValue(prettyPrintJson(json));
+
+                    return this.chromeSettingsService.setUrlFilterOptions(JSON.parse(json));
+                }
+                else {
+                    return of(undefined);
+                }
+            })
+        ).subscribe();
     }
 
 }

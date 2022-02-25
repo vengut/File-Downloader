@@ -14,9 +14,16 @@ import {
 import {ChromeSettingsKey, ChromeSettingsModel} from './chrome-settings.model';
 import {StorageNamespace} from "./chrome-storage.model";
 import {isEqual} from "lodash";
+import {SelectItemList} from "../../settings/settings.model";
 
 @Injectable({providedIn: 'root'})
 export class ChromeSettingsService {
+    public static readonly DEFAULT_URL_FILTER_OPTIONS: SelectItemList = [
+        { value: '.mp3', label: 'MP3', isSelected: true },
+        { value: '.m3u8', label: 'HLS' },
+        { value: '.mp4', label: 'MP4' }
+    ];
+
     constructor() { }
 
     public getSettingsChanges() {
@@ -30,22 +37,21 @@ export class ChromeSettingsService {
         );
     }
 
-    public setUrlFilter(newUrlFilter: string[]): Observable<string[]> {
-        return this.getUrlFilter().pipe(
-            switchMap(oldUrlFilter => {
-                if (isEqual(oldUrlFilter, newUrlFilter)) {
-                    return of(oldUrlFilter);
+    public setUrlFilterOptions(newUrlFilterOptions: SelectItemList): Observable<SelectItemList> {
+        return this.getUrlFilterOptions().pipe(
+            switchMap(oldUrlFilterOptions => {
+                if (isEqual(oldUrlFilterOptions, newUrlFilterOptions)) {
+                    return of(oldUrlFilterOptions);
                 }
 
-                return this.setSetting<string[]>(ChromeSettingsKey.UrlFilter, newUrlFilter === undefined || newUrlFilter === null ? [] : newUrlFilter);
+                return this.setSetting<SelectItemList>(ChromeSettingsKey.UrlFilterOptions, newUrlFilterOptions === undefined || newUrlFilterOptions === null ? ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS : newUrlFilterOptions);
             })
-        )
-
+        );
     }
 
-    public getUrlFilter(): Observable<string[]> {
-        return this.getSetting<string[]>(ChromeSettingsKey.UrlFilter).pipe(
-            map(urlFilter => urlFilter === null || urlFilter === undefined ? [] : urlFilter)
+    public getUrlFilterOptions(): Observable<SelectItemList> {
+        return this.getSetting<SelectItemList>(ChromeSettingsKey.UrlFilterOptions).pipe(
+            map(urlFilterOptions => urlFilterOptions === null || urlFilterOptions === undefined ? ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS : urlFilterOptions)
         );
     }
 
@@ -76,14 +82,14 @@ export class ChromeSettingsService {
 
                 if (namespace === 'sync') {
 
-                    if (changes.hasOwnProperty(ChromeSettingsKey.UrlFilter)) {
-                        settings.urlFilter = changes[ChromeSettingsKey.UrlFilter].newValue ?? [];
+                    if (changes.hasOwnProperty(ChromeSettingsKey.UrlFilterOptions)) {
+                        settings.urlFilterOptions = changes[ChromeSettingsKey.UrlFilterOptions].newValue ?? [];
                     }
                 }
 
                 return settings;
             }
         )
-            .pipe(filter(settings => settings.urlFilter !== undefined));
+        .pipe(filter(settings => settings.urlFilterOptions !== undefined));
     }
 }

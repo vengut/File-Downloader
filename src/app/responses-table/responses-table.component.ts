@@ -1,19 +1,20 @@
 import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
-import {containedInList, distinct, FileName, getPathName} from "../utilities";
+import {containedInList, distinct, FileName, getPathName, prettyPrintJson} from "../utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./responses-table.model";
 import {Table} from "primeng/table";
 import {FilterService, MenuItem} from "primeng/api";
 import {DatePipe} from "@angular/common";
-import {groupBy, orderBy} from "lodash"
-import {concatMap, delay, finalize, from, mergeMap, of} from "rxjs";
+import {groupBy, isEqual, orderBy} from "lodash"
+import {concatMap, debounceTime, delay, distinctUntilChanged, finalize, from, mergeMap, of} from "rxjs";
 import {ToastService, ToastType} from "../services/toast.service";
 import {ChromeDownloadsService} from '../services/chrome/chrome-downloads.service';
 import {ChromeSettingsService} from '../services/chrome/chrome-settings.service';
 import {Clipboard} from "@angular/cdk/clipboard";
 import {ChromeStorageService} from "../services/chrome/chrome-storage.service";
-import {FormControl} from "@angular/forms";
+import {FormControl, FormControlStatus} from "@angular/forms";
+import {SelectItemList} from "../settings/settings.model";
 
 @Component({
     selector: 'responses-table',
@@ -31,19 +32,12 @@ export class ResponsesTableComponent implements OnInit {
 
     public columns: HttpResponseTableColumn[] = [];
     public globalFilter: string = "";
-    public urlFilterFormControl: FormControl = new FormControl(undefined);
     public selectedResponses: HttpResponseTableModel[] = [];
+    public allUrlFilterOptions: SelectItemList = [];
+    public urlFilterFormControl: FormControl = new FormControl([]);
 
-    public get urlFilter(): string[] {
-        return this.urlFilterFormControl.value;
-    }
-
-    public get urlFilterOptions(): SelectItem[] {
-        return [
-            { value: '.mp3', label: 'MP3'},
-            { value: '.m3u8', label: 'HLS' },
-            { value: '.mp4', label: 'MP4' },
-        ];
+    public get selectedUrlFilter(): SelectItemList {
+        return this.urlFilterFormControl.value ?? [];
     }
 
     public get types(): SelectItem[] {
@@ -117,12 +111,20 @@ export class ResponsesTableComponent implements OnInit {
             { field: 'tab', header: 'Tab', sortable: true },
         ];
 
-        this.filterService.register('containedInList', (value: string, filters: string[]): boolean => containedInList(value, filters));
+        this.filterService.register('containedInList', (value: string, filters: SelectItemList): boolean => {
+            if (filters === undefined) {
+                return true;
+            }
+
+            return filters.some(filter => value.toLowerCase().includes(filter.value.toLowerCase()));
+        });
     }
 
     ngOnInit() {
-        this.chromeSettingsService.getUrlFilter().subscribe((urlFilter)=> {
-            this.filterUrls(urlFilter);
+        this.chromeSettingsService.getUrlFilterOptions().subscribe((allUrlFilterOptions)=> {
+            this.allUrlFilterOptions = allUrlFilterOptions;
+            this.urlFilterFormControl.setValue(this.allUrlFilterOptions.filter(u => u.isSelected));
+            this.filterUrls();
         });
 
         this.chromeStorageService.getStorageChanges()
@@ -132,22 +134,27 @@ export class ResponsesTableComponent implements OnInit {
                 }
             });
 
-        this.chromeSettingsService.getSettingsChanges().subscribe(settings => {
-            if (settings.urlFilter) {
-                this.urlFilterFormControl.setValue(settings.urlFilter);
-            }
-        });
-
         this.urlFilterFormControl.valueChanges.pipe(
-            mergeMap((urlFilter: string[]) => this.chromeSettingsService.setUrlFilter(urlFilter))
-        ).subscribe();
+            distinctUntilChanged((a, b) => isEqual(a, b)),
+            concatMap((selectedUrlFilterOptions: SelectItemList) => {
+                selectedUrlFilterOptions.forEach(s => {
+                    const option = this.allUrlFilterOptions.find(o => o.value === s.value);
+
+                    if (option) {
+                        option.isSelected = true;
+                    }
+                });
+
+                this.filterUrls();
+
+                return this.chromeSettingsService.setUrlFilterOptions(this.allUrlFilterOptions);
+            })
+        )
+        .subscribe();
     }
 
-    public filterUrls(urlFilter?: string[]) {
-        if (urlFilter === undefined) {
-            urlFilter = this.urlFilter;
-        }
-        this.table.filter(urlFilter, 'url', 'containedInList');
+    public filterUrls() {
+        this.table.filter(this.selectedUrlFilter, 'url', 'containedInList');
     }
 
     public downloadUrl(response: HttpResponseTableModel, saveAs: boolean = true) {

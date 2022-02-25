@@ -65,9 +65,9 @@
                 <th>
                     <p-multiSelect
                         [formControl]="urlFilterFormControl"
+                        optionLabel="label"
                         styleClass="p-column-filter-row"
-                        [options]="urlFilterOptions"
-                        (onChange)="filterUrls($event.value)"
+                        [options]="allUrlFilterOptions"
                         placeholder="Any"
                         [maxSelectedLabels]="1"
                         [selectedItemsLabel]="'{0} items selected'"

@@ -1,7 +1,9 @@
+import {SelectItemList} from "../../settings/settings.model";
+
 export interface ChromeSettingsModel {
-    urlFilter?: string[];
+    urlFilterOptions?: SelectItemList;
 }
 
 export enum ChromeSettingsKey {
-    UrlFilter = 'urlFilter'
+    UrlFilterOptions = 'urlFilterOptions'
 }
