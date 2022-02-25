@@ -22,30 +22,7 @@ export class ChromeStorageService {
     constructor() {
     }
 
-    public getEventStream() {
-        return fromEventPattern(
-            (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
-            (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler),
-            (changes: { [key: string]: chrome.storage.StorageChange }, namespace: StorageNamespace) => {
-                const storage: ChromeStorageModel = {};
-
-                if (namespace === 'local') {
-                    if (changes.hasOwnProperty(ChromeStorageKey.IsListening)) {
-                        storage.isListening = changes[ChromeStorageKey.IsListening].newValue ?? false;
-                    }
-
-                    if (changes.hasOwnProperty(ChromeStorageKey.Responses)) {
-                        storage.responses = changes[ChromeStorageKey.Responses].newValue ?? [];
-                    }
-                }
-
-                return storage;
-            }
-        )
-        .pipe(filter(storage => storage.isListening !== undefined || storage.responses !== undefined));
-    }
-
-    public getAll() {
+    public getStorageChanges() {
         return concat(
             from(this.getLocalStorage()),
             this.getEventStream().pipe(mergeMap(() => this.getLocalStorage())),
@@ -94,5 +71,28 @@ export class ChromeStorageService {
 
     private getLocalStorage(): Promise<ChromeStorageModel> {
         return chrome.storage.local.get();
+    }
+
+    private getEventStream() {
+        return fromEventPattern(
+            (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
+            (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler),
+            (changes: { [key: string]: chrome.storage.StorageChange }, namespace: StorageNamespace) => {
+                const storage: ChromeStorageModel = {};
+
+                if (namespace === 'local') {
+                    if (changes.hasOwnProperty(ChromeStorageKey.IsListening)) {
+                        storage.isListening = changes[ChromeStorageKey.IsListening].newValue ?? false;
+                    }
+
+                    if (changes.hasOwnProperty(ChromeStorageKey.Responses)) {
+                        storage.responses = changes[ChromeStorageKey.Responses].newValue ?? [];
+                    }
+                }
+
+                return storage;
+            }
+        )
+            .pipe(filter(storage => storage.isListening !== undefined || storage.responses !== undefined));
     }
 }

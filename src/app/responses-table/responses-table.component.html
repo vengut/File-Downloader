@@ -119,24 +119,13 @@
                 <td> {{ response.type }}</td>
                 <td> {{ response.tabDisplay }}</td>
                 <td>
-                    <button
-                        pButton
-                        pRipple
-                        type="button"
+                    <p-splitButton
                         icon="pi pi-video"
-                        class="p-button-rounded p-button-success me-1"
-                        (click)="streamUrl(response)"
+                        styleClass="p-button-secondary"
+                        (onClick)="streamUrl(response)"
+                        [model]="responseActions[response.id]"
                     >
-                    </button>
-                    <button
-                        pButton
-                        pRipple
-                        type="button"
-                        class="p-button-rounded p-button-help"
-                        icon="pi pi-download"
-                        (click)="downloadUrl(response)"
-                    >
-                    </button>
+                    </p-splitButton>
                 </td>
             </tr>
         </ng-template>

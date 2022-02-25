@@ -4,7 +4,7 @@ import {SelectItem} from "primeng/api/selectitem";
 import {containedInList, distinct, FileName, getPathName} from "../utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./responses-table.model";
 import {Table} from "primeng/table";
-import {FilterService} from "primeng/api";
+import {FilterService, MenuItem} from "primeng/api";
 import {DatePipe} from "@angular/common";
 import {groupBy, orderBy} from "lodash"
 import {concatMap, delay, finalize, from, mergeMap, of} from "rxjs";
@@ -69,6 +69,39 @@ export class ResponsesTableComponent implements OnInit {
         return this.selectedResponsesLength > 0;
     }
 
+    public get responseActions(): { [id: string]: MenuItem[] } {
+        return this.responses.reduce((buttonActions, response) => {
+            buttonActions[response.id] = [
+                {
+                    label: "Save As",
+                    icon: "pi pi-save",
+                    command: () => {
+                        this.downloadUrl(response, true);
+                    }
+                },
+                {
+                    label: "Download",
+                    icon: "pi pi-download",
+                    command: () => {
+                        this.downloadUrl(response, false);
+                    }
+                },
+                {
+                    separator: true
+                },
+                {
+                    label: "Stream",
+                    icon: "pi pi-video",
+                    command: () => {
+                        this.streamUrl(response);
+                    }
+                },
+            ];
+
+            return buttonActions;
+        }, <{ [id: string]: MenuItem[] }> {});
+    }
+
     constructor(
         private chromeStorageService: ChromeStorageService,
         private chromeSettingsService: ChromeSettingsService,
@@ -92,14 +125,14 @@ export class ResponsesTableComponent implements OnInit {
             this.filterUrls(urlFilter);
         });
 
-        this.chromeStorageService.getAll()
+        this.chromeStorageService.getStorageChanges()
             .subscribe(storage => {
                 if (storage.responses) {
                     this.responses = this.mapResponsesToTableModel(storage.responses);
                 }
             });
 
-        this.chromeSettingsService.getAll().subscribe(settings => {
+        this.chromeSettingsService.getSettingsChanges().subscribe(settings => {
             if (settings.urlFilter) {
                 this.urlFilterFormControl.setValue(settings.urlFilter);
             }
@@ -118,13 +151,19 @@ export class ResponsesTableComponent implements OnInit {
     }
 
     public downloadUrl(response: HttpResponseTableModel, saveAs: boolean = true) {
-        const fileName = new FileName(response.url, response.tab);
+        const fileName: FileName = new FileName(response.url, response.tab);
 
         this.chromeDownloadsService.downloadFile(response.url, fileName.toString(), saveAs).subscribe({
             next: (downloadId) => {
+                console.log(downloadId);
                 if (!saveAs) {
-                    console.log(`Download Started: ${downloadId}`);
-                    this.toastService.toast(ToastType.Success, "Download Started", `File Name: ${fileName.shortenedString()}<br/>Date: ${response.dateDisplay}`);
+                    let message = `Date: ${response.dateDisplay}`;
+
+                    if (fileName.toString() !== undefined) {
+                        message += ` <br/> Filename: ${fileName.toString()}`;
+                    }
+
+                    this.toastService.toast(ToastType.Success, "Download Started", message);
                 }
             },
             error: (err: string) =>{

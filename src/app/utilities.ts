@@ -5,7 +5,12 @@ export function distinct<T>(list: T[]): T[] {
 }
 
 export function getPathName(url: string): string {
-    return new URL(url).pathname;
+    try {
+        return new URL(url).pathname;
+    }
+    catch (e) {
+        return url;
+    }
 }
 
 export function containedInList(value: string, filters: string[]): boolean {
@@ -17,10 +22,10 @@ export function containedInList(value: string, filters: string[]): boolean {
 }
 
 export class FileName {
-    public name: string;
-    public extension: string;
-    public createdDate: Date;
-    private url: string;
+    public readonly name: string;
+    public readonly extension: string | undefined;
+    public readonly createdDate: Date;
+    public readonly url: string;
 
     constructor(url: string, optionalName?: string, createdDate?: Date) {
         this.url = url;
@@ -29,35 +34,30 @@ export class FileName {
             name,
             extension
         } = FileName.getFileNameAndExtension(url);
+
         if (optionalName !== undefined) {
             name = optionalName;
         }
 
         this.name = sanitize(name);
         this.extension = extension;
-        this.createdDate = new Date();
+        this.createdDate = createdDate ?? new Date();
     }
 
     public toString() {
+        if (this.extension === undefined || this.name === undefined) {
+            return undefined;
+        }
+
         return `${this.name}.${this.extension}`;
     }
 
-    public shortenedString() {
-        return `${this.name.substring(0, 50)}.${this.extension}`;
-    }
-
-    private static getFileNameAndExtension(url: string): { name: string, extension: string } {
+    private static getFileNameAndExtension(url: string): { name: string, extension: string | undefined } {
         const pathName = getPathName(url);
         const fileParts = pathName.split('.');
 
         const name = fileParts.join("");
         const extension = fileParts.pop();
-        if (extension === undefined || extension.length === pathName.length) {
-            return {
-                name,
-                extension: ""
-            };
-        }
 
         return {
             name,

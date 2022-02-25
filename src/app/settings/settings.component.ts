@@ -19,7 +19,7 @@ export class SettingsComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.chromeSettingsService.getAll().subscribe(settings => {
+        this.chromeSettingsService.getSettingsChanges().subscribe(settings => {
             if (settings.urlFilter) {
                 this.urlFilter = settings.urlFilter;
             }

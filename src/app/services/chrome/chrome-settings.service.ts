@@ -19,27 +19,7 @@ import {isEqual} from "lodash";
 export class ChromeSettingsService {
     constructor() { }
 
-    public getEventStream() {
-        return fromEventPattern(
-            (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
-            (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler),
-            (changes: { [key: string]: chrome.storage.StorageChange }, namespace: StorageNamespace) => {
-                const settings: ChromeSettingsModel = {};
-
-                if (namespace === 'sync') {
-
-                    if (changes.hasOwnProperty(ChromeSettingsKey.UrlFilter)) {
-                        settings.urlFilter = changes[ChromeSettingsKey.UrlFilter].newValue ?? [];
-                    }
-                }
-
-                return settings;
-            }
-        )
-        .pipe(filter(settings => settings.urlFilter !== undefined));
-    }
-
-    public getAll() {
+    public getSettingsChanges() {
         return concat(
             from(this.getSyncStorage()),
             this.getEventStream().pipe(mergeMap(() => this.getSyncStorage())),
@@ -85,5 +65,25 @@ export class ChromeSettingsService {
 
     private getSyncStorage(): Promise<ChromeSettingsModel> {
         return chrome.storage.sync.get();
+    }
+
+    private getEventStream() {
+        return fromEventPattern(
+            (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
+            (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler),
+            (changes: { [key: string]: chrome.storage.StorageChange }, namespace: StorageNamespace) => {
+                const settings: ChromeSettingsModel = {};
+
+                if (namespace === 'sync') {
+
+                    if (changes.hasOwnProperty(ChromeSettingsKey.UrlFilter)) {
+                        settings.urlFilter = changes[ChromeSettingsKey.UrlFilter].newValue ?? [];
+                    }
+                }
+
+                return settings;
+            }
+        )
+            .pipe(filter(settings => settings.urlFilter !== undefined));
     }
 }

@@ -27,6 +27,7 @@ import {MatSidenavModule} from "@angular/material/sidenav";
 import {MatListModule} from "@angular/material/list";
 import { SettingsComponent } from './settings/settings.component';
 import {SliderModule} from "primeng/slider";
+import {SplitButtonModule} from "primeng/splitbutton";
 
 
 @NgModule({
@@ -60,7 +61,8 @@ import {SliderModule} from "primeng/slider";
         MatSidenavModule,
         MatListModule,
         SliderModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        SplitButtonModule
     ],
     providers: [],
     bootstrap: [AppComponent]

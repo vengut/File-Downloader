@@ -38,7 +38,7 @@ export class AppComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        this.chromeStorageService.getAll()
+        this.chromeStorageService.getStorageChanges()
             .subscribe(storage => {
                 if (storage.isListening) {
                     this.isListeningFormControl.setValue(storage.isListening);
