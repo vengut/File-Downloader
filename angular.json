@@ -36,10 +36,10 @@
             ],
             "styles": [
               "src/styles.scss",
-              "node_modules/primeng/resources/themes/bootstrap4-dark-purple/theme.css",
+              "node_modules/primeng/resources/themes/mdc-light-indigo/theme.css",
               "node_modules/primeng/resources/primeng.min.css",
               "node_modules/primeicons/primeicons.css",
-              "node_modules/@angular/material/prebuilt-themes/purple-green.css",
+              "node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/ngx-toastr/toastr.css"
             ],
