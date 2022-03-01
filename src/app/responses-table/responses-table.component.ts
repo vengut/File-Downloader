@@ -1,20 +1,23 @@
-import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../shared/services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
-import {containedInList, distinct, FileName, getPathName, prettyPrintJson} from "../utilities";
+import {distinct, FileName, getPathName} from "../shared/services/utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./responses-table.model";
 import {Table} from "primeng/table";
 import {FilterService, MenuItem} from "primeng/api";
 import {DatePipe} from "@angular/common";
 import {groupBy, isEqual, orderBy} from "lodash"
-import {concatMap, debounceTime, delay, distinctUntilChanged, finalize, from, mergeMap, of} from "rxjs";
+import {concatMap, delay, distinctUntilChanged, finalize, from, mergeMap, of} from "rxjs";
 import {ToastService, ToastType} from "../shared/services/toast.service";
 import {ChromeDownloadsService} from '../shared/services/chrome/chrome-downloads.service';
 import {ChromeSettingsService} from '../shared/services/chrome/chrome-settings.service';
 import {Clipboard} from "@angular/cdk/clipboard";
 import {ChromeStorageService} from "../shared/services/chrome/chrome-storage.service";
-import {FormControl, FormControlStatus} from "@angular/forms";
+import {FormControl} from "@angular/forms";
 import {SelectItemList} from "../settings/settings.model";
+import { ActivatedRoute } from '@angular/router';
+import { ChromeStorageModel } from '../shared/services/chrome/chrome-storage.model';
+import { ChromeSettingsModel } from '../shared/services/chrome/chrome-settings.model';
 
 @Component({
     selector: 'responses-table',
@@ -102,7 +105,8 @@ export class ResponsesTableComponent implements OnInit {
         private filterService: FilterService,
         private chromeDownloadsService: ChromeDownloadsService,
         private toastService: ToastService,
-        private clipboard: Clipboard
+        private clipboard: Clipboard,
+        private activatedRoute: ActivatedRoute
     ) {
         this.columns = [
             { field: 'url', header: 'URL', sortable: true },
@@ -121,6 +125,8 @@ export class ResponsesTableComponent implements OnInit {
     }
 
     ngOnInit() {
+        console.log(this.activatedRoute.snapshot.data);
+
         this.chromeSettingsService.getUrlFilterOptions().subscribe((allUrlFilterOptions)=> {
             this.allUrlFilterOptions = allUrlFilterOptions;
             this.urlFilterFormControl.setValue(this.allUrlFilterOptions.filter(u => u.isSelected));
@@ -132,24 +138,26 @@ export class ResponsesTableComponent implements OnInit {
                 if (storage.responses) {
                     this.responses = this.mapResponsesToTableModel(storage.responses);
                 }
+                console.log(new Date().getSeconds());
             });
 
-        this.urlFilterFormControl.valueChanges.pipe(
-            distinctUntilChanged((a, b) => isEqual(a, b)),
-            concatMap((selectedUrlFilterOptions: SelectItemList) => {
-                const urlFilterOptions = this.allUrlFilterOptions
-                    .map(option => ({
-                        isSelected: selectedUrlFilterOptions.some(s => s.value === option.value),
-                        label: option.label,
-                        value: option.value
-                    }))
-                    .slice();
+        this.urlFilterFormControl.valueChanges
+            .pipe(
+                distinctUntilChanged((a, b) => isEqual(a, b)),
+                concatMap((selectedUrlFilterOptions: SelectItemList) => {
+                    const urlFilterOptions = this.allUrlFilterOptions
+                        .map(option => ({
+                            isSelected: selectedUrlFilterOptions.some(s => s.value === option.value),
+                            label: option.label,
+                            value: option.value
+                        }))
+                        .slice();
 
-                this.filterUrls();
-                return this.chromeSettingsService.setUrlFilterOptions(urlFilterOptions);
-            })
-        )
-        .subscribe();
+                    this.filterUrls();
+                    return this.chromeSettingsService.setUrlFilterOptions(urlFilterOptions);
+                })
+            )
+            .subscribe();
     }
 
     public filterUrls() {

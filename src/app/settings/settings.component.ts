@@ -4,8 +4,10 @@ import {FormControl, FormControlStatus} from "@angular/forms";
 import { SelectItemList, SelectItemListSchema } from './settings.model';
 import { JsonTypeValidator } from '../shared/services/zod-extensions';
 import {combineLatest, concatMap, debounceTime, distinctUntilChanged, of} from "rxjs";
-import {prettyPrintJson, prettyPrintObject} from "../utilities";
+import {prettyPrintJson, prettyPrintObject} from "../shared/services/utilities";
 import {isEqual} from "lodash";
+import { ActivatedRoute } from '@angular/router';
+import { ChromeSettingsModel } from '../shared/services/chrome/chrome-settings.model';
 
 @Component({
     selector: 'settings',
@@ -29,7 +31,8 @@ export class SettingsComponent implements OnInit {
     }
 
     constructor(
-        private chromeSettingsService: ChromeSettingsService
+        private chromeSettingsService: ChromeSettingsService,
+        private activatedRoute: ActivatedRoute
     ) {
         this.urlFilterOptionsFormControl = new FormControl(
             JSON.stringify(this.urlFilterOptions, null, 2),
@@ -38,6 +41,8 @@ export class SettingsComponent implements OnInit {
     }
 
     ngOnInit() {
+        console.log(this.activatedRoute.snapshot.data);
+        
         this.chromeSettingsService.getUrlFilterOptions().subscribe(urlFilterOptions => {
             if (urlFilterOptions) {
                 this.urlFilterOptionsFormControl.setValue(prettyPrintObject(urlFilterOptions));

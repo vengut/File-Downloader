@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {
     bufferTime,
     concat,
+    distinctUntilChanged,
     filter,
     from,
     fromEventPattern,
@@ -17,18 +18,23 @@ import {
     ChromeStorageModel,
     StorageNamespace
 } from "./chrome-storage.model";
+import { isEqual } from 'lodash';
+import { ChromeSettingsService } from './chrome-settings.service';
 
 @Injectable({providedIn: 'root'})
 export class ChromeStorageService {
-    constructor() {
+    constructor() {}
+
+    public getLocalStorage(): Promise<ChromeStorageModel> {
+        return chrome.storage.local.get();
     }
 
-    public getStorageChanges(refreshRate: number = 3000) {
+    public getStorageChanges(refreshRate: number = ChromeSettingsService.DEFAULT_REFRESH_RATE) {
         return concat(
             from(this.getLocalStorage()),
             this.getEventStream().pipe(mergeMap(() => this.getLocalStorage())),
         ).pipe(
-            bufferTime(refreshRate),
+            bufferTime(100, refreshRate),
             map((changes) => changes.pop() ?? {})
         );
     }
@@ -69,10 +75,6 @@ export class ChromeStorageService {
         );
     }
 
-    private getLocalStorage(): Promise<ChromeStorageModel> {
-        return chrome.storage.local.get();
-    }
-
     private getEventStream() {
         return fromEventPattern(
             (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
@@ -92,7 +94,6 @@ export class ChromeStorageService {
 
                 return storage;
             }
-        )
-            .pipe(filter(storage => storage.isListening !== undefined || storage.responses !== undefined));
+        );
     }
 }

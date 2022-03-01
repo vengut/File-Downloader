@@ -8,8 +8,9 @@ import {
     of,
     mergeMap,
     concat,
-    windowTime,
-    mergeAll, filter, distinctUntilChanged, bufferTime
+    filter, 
+    bufferTime,
+    distinctUntilChanged
 } from 'rxjs';
 import {ChromeSettingsKey, ChromeSettingsModel} from './chrome-settings.model';
 import {StorageNamespace} from "./chrome-storage.model";
@@ -23,15 +24,20 @@ export class ChromeSettingsService {
         { value: '.m3u8', label: 'HLS' },
         { value: '.mp4', label: 'MP4' }
     ];
+    public static readonly DEFAULT_REFRESH_RATE: number = 10000;
 
     constructor() { }
 
-    public getSettingsChanges(refreshRate: number = 3000) {
+    public getSyncStorage(): Promise<ChromeSettingsModel> {
+        return chrome.storage.sync.get();
+    }
+
+    public getSettingsChanges(refreshRate: number = ChromeSettingsService.DEFAULT_REFRESH_RATE) {
         return concat(
             from(this.getSyncStorage()),
             this.getEventStream().pipe(mergeMap(() => this.getSyncStorage())),
         ).pipe(
-            bufferTime(refreshRate),
+            bufferTime(100, refreshRate),
             map((changes) => changes.pop() ?? {})
         );
     }
@@ -68,10 +74,6 @@ export class ChromeSettingsService {
         );
     }
 
-    private getSyncStorage(): Promise<ChromeSettingsModel> {
-        return chrome.storage.sync.get();
-    }
-
     private getEventStream() {
         return fromEventPattern(
             (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
@@ -80,7 +82,6 @@ export class ChromeSettingsService {
                 const settings: ChromeSettingsModel = {};
 
                 if (namespace === 'sync') {
-
                     if (changes.hasOwnProperty(ChromeSettingsKey.UrlFilterOptions)) {
                         settings.urlFilterOptions = changes[ChromeSettingsKey.UrlFilterOptions].newValue ?? [];
                     }
@@ -88,7 +89,6 @@ export class ChromeSettingsService {
 
                 return settings;
             }
-        )
-        .pipe(filter(settings => settings.urlFilterOptions !== undefined));
+        );
     }
 }
