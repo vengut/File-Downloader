@@ -9,7 +9,7 @@ import {
     mergeMap,
     concat,
     windowTime,
-    mergeAll, filter, distinctUntilChanged
+    mergeAll, filter, distinctUntilChanged, bufferTime
 } from 'rxjs';
 import {ChromeSettingsKey, ChromeSettingsModel} from './chrome-settings.model';
 import {StorageNamespace} from "./chrome-storage.model";
@@ -26,14 +26,13 @@ export class ChromeSettingsService {
 
     constructor() { }
 
-    public getSettingsChanges() {
+    public getSettingsChanges(refreshRate: number = 3000) {
         return concat(
             from(this.getSyncStorage()),
             this.getEventStream().pipe(mergeMap(() => this.getSyncStorage())),
         ).pipe(
-            distinctUntilChanged((a, b) => isEqual(a, b)),
-            windowTime(3000),
-            mergeAll()
+            bufferTime(refreshRate),
+            map((changes) => changes.pop() ?? {})
         );
     }
 

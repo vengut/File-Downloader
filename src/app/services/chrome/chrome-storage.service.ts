@@ -1,12 +1,15 @@
 import {Injectable} from '@angular/core';
 import {
-    concat, distinctUntilChanged, filter,
+    bufferTime,
+    concat,
+    filter,
     from,
     fromEventPattern,
-    map, mergeAll, mergeMap,
-    Observable, of,
-    switchMap,
-    windowTime
+    map,  
+    mergeMap,
+    Observable,
+    of,
+    switchMap
 } from 'rxjs';
 import {HttpResponseModel} from './chrome-web-request.model';
 import {
@@ -14,22 +17,19 @@ import {
     ChromeStorageModel,
     StorageNamespace
 } from "./chrome-storage.model";
-import {ChromeSettingsService} from "./chrome-settings.service";
-import {isEqual} from "lodash";
 
 @Injectable({providedIn: 'root'})
 export class ChromeStorageService {
     constructor() {
     }
 
-    public getStorageChanges() {
+    public getStorageChanges(refreshRate: number = 3000) {
         return concat(
             from(this.getLocalStorage()),
             this.getEventStream().pipe(mergeMap(() => this.getLocalStorage())),
         ).pipe(
-            distinctUntilChanged((a, b) => isEqual(a, b)),
-            windowTime(3000),
-            mergeAll()
+            bufferTime(refreshRate),
+            map((changes) => changes.pop() ?? {})
         );
     }
 

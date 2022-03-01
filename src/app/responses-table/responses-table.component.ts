@@ -137,17 +137,16 @@ export class ResponsesTableComponent implements OnInit {
         this.urlFilterFormControl.valueChanges.pipe(
             distinctUntilChanged((a, b) => isEqual(a, b)),
             concatMap((selectedUrlFilterOptions: SelectItemList) => {
-                selectedUrlFilterOptions.forEach(s => {
-                    const option = this.allUrlFilterOptions.find(o => o.value === s.value);
-
-                    if (option) {
-                        option.isSelected = true;
-                    }
-                });
+                const urlFilterOptions = this.allUrlFilterOptions
+                    .map(option => ({
+                        isSelected: selectedUrlFilterOptions.some(s => s.value === option.value),
+                        label: option.label,
+                        value: option.value
+                    }))
+                    .slice();
 
                 this.filterUrls();
-
-                return this.chromeSettingsService.setUrlFilterOptions(this.allUrlFilterOptions);
+                return this.chromeSettingsService.setUrlFilterOptions(urlFilterOptions);
             })
         )
         .subscribe();
