@@ -8,7 +8,7 @@ import {
     of,
     mergeMap,
     concat,
-    filter, 
+    filter,
     bufferTime,
     distinctUntilChanged
 } from 'rxjs';
@@ -32,13 +32,10 @@ export class ChromeSettingsService {
         return chrome.storage.sync.get();
     }
 
-    public getSettingsChanges(refreshRate: number = ChromeSettingsService.DEFAULT_REFRESH_RATE) {
+    public getSettings(refreshRate: number = ChromeSettingsService.DEFAULT_REFRESH_RATE) {
         return concat(
-            from(this.getSyncStorage()),
-            this.getEventStream().pipe(mergeMap(() => this.getSyncStorage())),
-        ).pipe(
-            bufferTime(100, refreshRate),
-            map((changes) => changes.pop() ?? {})
+            from(this.getSettingsChanges(refreshRate)),
+            this.getSettingsChanges(refreshRate)
         );
     }
 
@@ -93,7 +90,16 @@ export class ChromeSettingsService {
         );
     }
 
-    private getEventStream() {
+    private getSettingsChanges(refreshRate: number) {
+        return this.getStorageEventStream()
+            .pipe(
+                mergeMap(() => this.getSyncStorage()),
+                bufferTime(refreshRate),
+                map((changes) => changes.pop() ?? {})
+            );
+    }
+
+    private getStorageEventStream() {
         return fromEventPattern(
             (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
             (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler),

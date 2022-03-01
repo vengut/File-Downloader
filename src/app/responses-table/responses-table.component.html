@@ -8,7 +8,7 @@
         [(selection)]="selectedResponses"
         [paginator]="true"
         [rows]="25"
-        [rowsPerPageOptions]="[10,25,50,100]"
+        [rowsPerPageOptions]="[10, 25, 50, 100]"
         sortField="date"
         [sortOrder]="-1"
         [globalFilterFields]="[ 'url', 'type', 'tab' ]"
@@ -17,30 +17,32 @@
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} responses"
     >
         <ng-template pTemplate="caption">
-            <div class="row">
-                <div class="col-sm-6">
-                    <p-button
-                        type="button"
-                        pRipple
-                        icon="pi pi-download"
-                        label="Download"
-                        styleClass="p-button-success"
-                        [badge]="selectedResponsesLength.toString()"
-                        (click)="downloadUrls()"
-                        [disabled]="!isDownloadsEnabled"
-                    >
-                    </p-button>
-                    <p-button 
-                        pRipple
-                        icon="pi pi-refresh" 
-                        styleClass="p-button-help"
-                        label="Refresh"
-                        [badge]="refreshLabel"
-                    >
-                    </p-button>
+            <div class="d-flex justify-content-start">
+                <div class="p-2 me-auto">
+                    <div class="p-buttonset">
+                        <p-button
+                            pRipple
+                            icon="pi pi-download"
+                            label="Download"
+                            styleClass="p-button-success"
+                            [badge]="selectedResponsesLength.toString()"
+                            (click)="downloadUrls()"
+                            [disabled]="!isDownloadsEnabled"
+                        >
+                        </p-button>
+                        <p-button
+                            pRipple
+                            icon="pi pi-refresh"
+                            [label]="lastRefreshLabel"
+                            styleClass="p-button-help"
+                            [badge]="refreshRateLabel"
+                            (click)="refreshResponses()"
+                        >
+                        </p-button>
+                    </div>
                 </div>
-                <div class="offset-sm-3 col-sm-2">
-                    <span class="p-input-icon-left ml-auto">
+                <div class="p-2">
+                    <div class="p-input-icon-left">
                         <i class="pi pi-search"></i>
                         <input
                             pInputText
@@ -50,7 +52,7 @@
                             (input)="dt.filterGlobal(globalFilter, 'contains')"
                             placeholder="Search Responses"
                         />
-                    </span>
+                    </div>
                 </div>
             </div>
         </ng-template>

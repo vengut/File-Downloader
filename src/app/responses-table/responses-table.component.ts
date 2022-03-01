@@ -31,6 +31,7 @@ export class ResponsesTableComponent implements OnInit {
     public isLoading: boolean = false;
     public responses: HttpResponseTableModel[] = [];
     public refreshRate: number = 0;
+    public lastRefresh: Date = new Date("1970");
 
     @ViewChild('dt', {static: false}) public table!: Table;
 
@@ -62,8 +63,15 @@ export class ResponsesTableComponent implements OnInit {
         }
         return 0;
     }
-    public get refreshLabel(): string {
-        return Math.ceil(this.refreshRate / 1000).toString();
+
+    public get lastRefreshLabel(): string {
+        const lastRefresh: string = new DatePipe('en-US').transform(this.lastRefresh, 'HH:mm:ss') ?? "Never";
+
+        return `Last Refresh: ${lastRefresh}`;
+    }
+
+    public get refreshRateLabel(): string {
+        return `${(this.refreshRate / 1000).toFixed(2)}s`;
     }
 
     public get isDownloadsEnabled(): boolean {
@@ -141,12 +149,12 @@ export class ResponsesTableComponent implements OnInit {
             this.filterUrls();
         });
 
-        this.chromeStorageService.getStorageChanges()
+        this.chromeStorageService.getStorage()
             .subscribe(storage => {
                 if (storage.responses) {
                     this.responses = this.mapResponsesToTableModel(storage.responses);
                 }
-                console.log(new Date().getSeconds());
+                this.lastRefresh = new Date();
             });
 
         this.urlFilterFormControl.valueChanges
@@ -228,6 +236,18 @@ export class ResponsesTableComponent implements OnInit {
         else {
             this.toastService.toast(ToastType.Warn, "Command", command, 30000, false);
         }
+    }
+
+    public refreshResponses() {
+        this.isLoading = true;
+        this.chromeStorageService.getResponses()
+            .pipe(
+                finalize(() => this.isLoading = false)
+            )
+            .subscribe(responses => {
+                this.responses = this.mapResponsesToTableModel(responses);
+                this.lastRefresh = new Date();
+            });
     }
 
     private mapResponsesToTableModel(responseData: HttpResponseModel[]): HttpResponseTableModel[] {

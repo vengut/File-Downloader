@@ -7,7 +7,6 @@ import {combineLatest, concatMap, debounceTime, distinctUntilChanged, of} from "
 import {prettyPrintJson, prettyPrintObject} from "../shared/services/utilities";
 import {isEqual} from "lodash";
 import { ActivatedRoute } from '@angular/router';
-import { ChromeSettingsModel } from '../shared/services/chrome/chrome-settings.model';
 
 @Component({
     selector: 'settings',
@@ -42,7 +41,7 @@ export class SettingsComponent implements OnInit {
 
     ngOnInit() {
         console.log(this.activatedRoute.snapshot.data);
-        
+
         this.chromeSettingsService.getUrlFilterOptions().subscribe(urlFilterOptions => {
             if (urlFilterOptions) {
                 this.urlFilterOptionsFormControl.setValue(prettyPrintObject(urlFilterOptions));

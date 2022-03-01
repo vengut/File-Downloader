@@ -3,6 +3,7 @@ import {concatMap} from 'rxjs';
 import {ChromeStorageService} from './shared/services/chrome/chrome-storage.service';
 import {HttpResponseModel} from "./shared/services/chrome/chrome-web-request.model";
 import {FormControl} from "@angular/forms";
+import {PrimeNGConfig} from "primeng/api";
 
 @Component({
     selector: 'app-root',
@@ -34,11 +35,14 @@ export class AppComponent implements OnInit {
     }
 
     constructor(
-        private chromeStorageService: ChromeStorageService
+        private chromeStorageService: ChromeStorageService,
+        private primengConfig: PrimeNGConfig
     ) { }
 
     ngOnInit() {
-        this.chromeStorageService.getStorageChanges()
+        this.primengConfig.ripple = true;
+
+        this.chromeStorageService.getStorage()
             .subscribe(storage => {
                 if (storage.isListening) {
                     this.isListeningFormControl.setValue(storage.isListening);

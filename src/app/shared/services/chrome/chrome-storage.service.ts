@@ -2,11 +2,9 @@ import {Injectable} from '@angular/core';
 import {
     bufferTime,
     concat,
-    distinctUntilChanged,
-    filter,
     from,
     fromEventPattern,
-    map,  
+    map,
     mergeMap,
     Observable,
     of,
@@ -18,7 +16,6 @@ import {
     ChromeStorageModel,
     StorageNamespace
 } from "./chrome-storage.model";
-import { isEqual } from 'lodash';
 import { ChromeSettingsService } from './chrome-settings.service';
 
 @Injectable({providedIn: 'root'})
@@ -29,13 +26,10 @@ export class ChromeStorageService {
         return chrome.storage.local.get();
     }
 
-    public getStorageChanges(refreshRate: number = ChromeSettingsService.DEFAULT_REFRESH_RATE) {
+    public getStorage(refreshRate: number = ChromeSettingsService.DEFAULT_REFRESH_RATE) {
         return concat(
             from(this.getLocalStorage()),
-            this.getEventStream().pipe(mergeMap(() => this.getLocalStorage())),
-        ).pipe(
-            bufferTime(100, refreshRate),
-            map((changes) => changes.pop() ?? {})
+            this.getStorageChanges(refreshRate)
         );
     }
 
@@ -58,6 +52,13 @@ export class ChromeStorageService {
             );
     }
 
+    public getResponses(): Observable<HttpResponseModel[]> {
+        return this.getValue<HttpResponseModel[]>(ChromeStorageKey.Responses)
+            .pipe(
+                map((responses) => responses === null || responses === undefined ? [] : responses)
+            );
+    }
+
     public clearResponses(): Observable<HttpResponseModel[]> {
         return this.setValue<HttpResponseModel[]>(ChromeStorageKey.Responses, []);
     }
@@ -75,7 +76,16 @@ export class ChromeStorageService {
         );
     }
 
-    private getEventStream() {
+    private getStorageChanges(refreshRate: number) {
+        return this.getStorageEventStream()
+            .pipe(
+                mergeMap(() => this.getLocalStorage()),
+                bufferTime(refreshRate),
+                map((changes) => changes.pop() ?? {})
+            );
+    }
+
+    private getStorageEventStream() {
         return fromEventPattern(
             (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
             (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler),
