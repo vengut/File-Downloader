@@ -54,10 +54,29 @@ export class ChromeSettingsService {
         );
     }
 
+    public setRefreshRate(newRefreshRate: number): Observable<number> {
+        return this.getRefreshRate().pipe(
+            switchMap((oldRefreshRate) => {
+                if (oldRefreshRate === newRefreshRate) {
+                    return of(newRefreshRate);
+                }
+
+                return this.setSetting<number>(ChromeSettingsKey.RefreshRate, newRefreshRate);
+            })
+        );
+    }
+
     public getUrlFilterOptions(): Observable<SelectItemList> {
         return this.getSetting<SelectItemList>(ChromeSettingsKey.UrlFilterOptions).pipe(
             map(urlFilterOptions => urlFilterOptions === null || urlFilterOptions === undefined ? ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS : urlFilterOptions)
         );
+    }
+
+    public getRefreshRate(): Observable<number> {
+        return this.getSetting<number>(ChromeSettingsKey.RefreshRate)
+            .pipe(
+                map((refreshRate) => refreshRate === null || refreshRate === undefined ? ChromeSettingsService.DEFAULT_REFRESH_RATE : refreshRate)
+            );
     }
 
 

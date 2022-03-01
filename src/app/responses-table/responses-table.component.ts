@@ -30,6 +30,7 @@ export class ResponsesTableComponent implements OnInit {
 
     public isLoading: boolean = false;
     public responses: HttpResponseTableModel[] = [];
+    public refreshRate: number = 0;
 
     @ViewChild('dt', {static: false}) public table!: Table;
 
@@ -60,6 +61,9 @@ export class ResponsesTableComponent implements OnInit {
             return this.selectedResponses.length;
         }
         return 0;
+    }
+    public get refreshLabel(): string {
+        return Math.ceil(this.refreshRate / 1000).toString();
     }
 
     public get isDownloadsEnabled(): boolean {
@@ -126,6 +130,10 @@ export class ResponsesTableComponent implements OnInit {
 
     ngOnInit() {
         console.log(this.activatedRoute.snapshot.data);
+
+        this.chromeSettingsService.getRefreshRate().subscribe((refreshRate) => {
+            this.refreshRate = refreshRate;
+        });
 
         this.chromeSettingsService.getUrlFilterOptions().subscribe((allUrlFilterOptions)=> {
             this.allUrlFilterOptions = allUrlFilterOptions;

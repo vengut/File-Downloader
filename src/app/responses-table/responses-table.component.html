@@ -18,7 +18,7 @@
     >
         <ng-template pTemplate="caption">
             <div class="row">
-                <div class="col-sm-2">
+                <div class="col-sm-6">
                     <p-button
                         type="button"
                         pRipple
@@ -30,19 +30,27 @@
                         [disabled]="!isDownloadsEnabled"
                     >
                     </p-button>
+                    <p-button 
+                        pRipple
+                        icon="pi pi-refresh" 
+                        styleClass="p-button-help"
+                        label="Refresh"
+                        [badge]="refreshLabel"
+                    >
+                    </p-button>
                 </div>
-                <div class="offset-sm-8 col-sm-2">
-                <span class="p-input-icon-left ml-auto">
-                    <i class="pi pi-search"></i>
-                    <input
-                        pInputText
-                        type="text"
-                        class="p-column-filter-row"
-                        [(ngModel)]="globalFilter"
-                        (input)="dt.filterGlobal(globalFilter, 'contains')"
-                        placeholder="Search Responses"
-                    />
-                </span>
+                <div class="offset-sm-3 col-sm-2">
+                    <span class="p-input-icon-left ml-auto">
+                        <i class="pi pi-search"></i>
+                        <input
+                            pInputText
+                            type="text"
+                            class="p-column-filter-row"
+                            [(ngModel)]="globalFilter"
+                            (input)="dt.filterGlobal(globalFilter, 'contains')"
+                            placeholder="Search Responses"
+                        />
+                    </span>
                 </div>
             </div>
         </ng-template>
