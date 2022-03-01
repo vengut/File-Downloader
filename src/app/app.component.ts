@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {concatMap} from 'rxjs';
-import {ChromeStorageService} from './services/chrome/chrome-storage.service';
-import {HttpResponseModel} from "./services/chrome/chrome-web-request.model";
+import {ChromeStorageService} from './shared/services/chrome/chrome-storage.service';
+import {HttpResponseModel} from "./shared/services/chrome/chrome-web-request.model";
 import {FormControl} from "@angular/forms";
 
 @Component({

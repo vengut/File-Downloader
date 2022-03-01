@@ -1,4 +1,4 @@
-import {SelectItemList} from "../../settings/settings.model";
+import {SelectItemList} from "../../../settings/settings.model";
 
 export interface ChromeSettingsModel {
     urlFilterOptions?: SelectItemList;

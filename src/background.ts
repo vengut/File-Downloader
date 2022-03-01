@@ -1,5 +1,5 @@
-import {HttpResponseModel} from "./app/services/chrome/chrome-web-request.model";
-import {ChromeStorageKey} from "./app/services/chrome/chrome-storage.model";
+import {HttpResponseModel} from "./app/shared/services/chrome/chrome-web-request.model";
+import {ChromeStorageKey} from "./app/shared/services/chrome/chrome-storage.model";
 
 chrome.action.onClicked.addListener((_tab) => {
     chrome.runtime.openOptionsPage();

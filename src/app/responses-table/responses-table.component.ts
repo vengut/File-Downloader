@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
-import {HttpResponseModel, ResourceTypes} from "../services/chrome/chrome-web-request.model";
+import {HttpResponseModel, ResourceTypes} from "../shared/services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
 import {containedInList, distinct, FileName, getPathName, prettyPrintJson} from "../utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./responses-table.model";
@@ -8,11 +8,11 @@ import {FilterService, MenuItem} from "primeng/api";
 import {DatePipe} from "@angular/common";
 import {groupBy, isEqual, orderBy} from "lodash"
 import {concatMap, debounceTime, delay, distinctUntilChanged, finalize, from, mergeMap, of} from "rxjs";
-import {ToastService, ToastType} from "../services/toast.service";
-import {ChromeDownloadsService} from '../services/chrome/chrome-downloads.service';
-import {ChromeSettingsService} from '../services/chrome/chrome-settings.service';
+import {ToastService, ToastType} from "../shared/services/toast.service";
+import {ChromeDownloadsService} from '../shared/services/chrome/chrome-downloads.service';
+import {ChromeSettingsService} from '../shared/services/chrome/chrome-settings.service';
 import {Clipboard} from "@angular/cdk/clipboard";
-import {ChromeStorageService} from "../services/chrome/chrome-storage.service";
+import {ChromeStorageService} from "../shared/services/chrome/chrome-storage.service";
 import {FormControl, FormControlStatus} from "@angular/forms";
 import {SelectItemList} from "../settings/settings.model";
 

@@ -1,8 +1,8 @@
 import {Component, OnInit } from '@angular/core';
-import { ChromeSettingsService } from '../services/chrome/chrome-settings.service';
+import { ChromeSettingsService } from '../shared/services/chrome/chrome-settings.service';
 import {FormControl, FormControlStatus} from "@angular/forms";
 import { SelectItemList, SelectItemListSchema } from './settings.model';
-import { JsonTypeValidator } from '../services/zod-extensions';
+import { JsonTypeValidator } from '../shared/services/zod-extensions';
 import {combineLatest, concatMap, debounceTime, distinctUntilChanged, of} from "rxjs";
 import {prettyPrintJson, prettyPrintObject} from "../utilities";
 import {isEqual} from "lodash";

@@ -14,7 +14,7 @@ import {
 import {ChromeSettingsKey, ChromeSettingsModel} from './chrome-settings.model';
 import {StorageNamespace} from "./chrome-storage.model";
 import {isEqual} from "lodash";
-import {SelectItemList} from "../../settings/settings.model";
+import {SelectItemList} from "../../../settings/settings.model";
 
 @Injectable({providedIn: 'root'})
 export class ChromeSettingsService {
