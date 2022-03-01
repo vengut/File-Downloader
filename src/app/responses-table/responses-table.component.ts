@@ -7,7 +7,7 @@ import {Table} from "primeng/table";
 import {FilterService, MenuItem} from "primeng/api";
 import {DatePipe} from "@angular/common";
 import {groupBy, isEqual, orderBy} from "lodash"
-import {concatMap, delay, distinctUntilChanged, finalize, from, mergeMap, of} from "rxjs";
+import {concatMap, delay, distinctUntilChanged, finalize, from, mergeMap, of, tap} from "rxjs";
 import {ToastService, ToastType} from "../shared/services/toast.service";
 import {ChromeDownloadsService} from '../shared/services/chrome/chrome-downloads.service';
 import {ChromeSettingsService} from '../shared/services/chrome/chrome-settings.service';
@@ -71,7 +71,7 @@ export class ResponsesTableComponent implements OnInit {
     }
 
     public get refreshRateLabel(): string {
-        return `${(this.refreshRate / 1000).toFixed(2)}s`;
+        return `${ (this.refreshRate / 1000).toFixed(1) }s`;
     }
 
     public get isDownloadsEnabled(): boolean {
@@ -137,25 +137,25 @@ export class ResponsesTableComponent implements OnInit {
     }
 
     ngOnInit() {
-        console.log(this.activatedRoute.snapshot.data);
+        console.log("Responses Route:", this.activatedRoute.snapshot.data);
 
-        this.chromeSettingsService.getRefreshRate().subscribe((refreshRate) => {
-            this.refreshRate = refreshRate;
-        });
-
-        this.chromeSettingsService.getUrlFilterOptions().subscribe((allUrlFilterOptions)=> {
-            this.allUrlFilterOptions = allUrlFilterOptions;
-            this.urlFilterFormControl.setValue(this.allUrlFilterOptions.filter(u => u.isSelected));
-            this.filterUrls();
-        });
-
-        this.chromeStorageService.getStorage()
+        this.chromeSettingsService.getRefreshRate()
+            .pipe(
+                tap(refreshRate => this.refreshRate = refreshRate),
+                concatMap(refreshRate => this.chromeStorageService.getStorage(this.refreshRate))
+            )
             .subscribe(storage => {
                 if (storage.responses) {
                     this.responses = this.mapResponsesToTableModel(storage.responses);
                 }
                 this.lastRefresh = new Date();
             });
+
+        this.chromeSettingsService.getUrlFilterOptions().subscribe((allUrlFilterOptions)=> {
+            this.allUrlFilterOptions = allUrlFilterOptions;
+            this.urlFilterFormControl.setValue(this.allUrlFilterOptions.filter(u => u.isSelected));
+            this.filterUrls();
+        });
 
         this.urlFilterFormControl.valueChanges
             .pipe(

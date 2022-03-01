@@ -24,7 +24,10 @@ export class ChromeSettingsService {
         { value: '.m3u8', label: 'HLS' },
         { value: '.mp4', label: 'MP4' }
     ];
-    public static readonly DEFAULT_REFRESH_RATE: number = 10000;
+    public static readonly DEFAULT_REFRESH_RATE: number = 5000;
+    public static readonly MIN_REFRESH_RATE: number = 3000;
+    public static readonly MAX_REFRESH_RATE: number = 30000;
+    public static readonly STEP_REFRESH_RATE: number = 500;
 
     constructor() { }
 

@@ -22,21 +22,21 @@
                     <div class="p-buttonset">
                         <p-button
                             pRipple
+                            icon="pi pi-refresh"
+                            [label]="lastRefreshLabel"
+                            styleClass="p-button-help"
+                            [badge]="refreshRateLabel"
+                            (click)="refreshResponses()"
+                        >
+                        </p-button>
+                        <p-button
+                            pRipple
                             icon="pi pi-download"
                             label="Download"
                             styleClass="p-button-success"
                             [badge]="selectedResponsesLength.toString()"
                             (click)="downloadUrls()"
                             [disabled]="!isDownloadsEnabled"
-                        >
-                        </p-button>
-                        <p-button
-                            pRipple
-                            icon="pi pi-refresh"
-                            [label]="lastRefreshLabel"
-                            styleClass="p-button-help"
-                            [badge]="refreshRateLabel"
-                            (click)="refreshResponses()"
                         >
                         </p-button>
                     </div>

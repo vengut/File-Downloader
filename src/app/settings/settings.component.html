@@ -1,25 +1,49 @@
 <mat-card style="width: 100%; height: 100%;">
     <mat-card-title>Settings</mat-card-title>
     <mat-card-content>
-        <mat-form-field appearance="fill">
-            <mat-label>
-                URL Filter
-            </mat-label>
-            <textarea
-                id="urlFilterOptions"
-                matInput
-                [rows]="20"
-                [cols]="40"
-                [formControl]="urlFilterOptionsFormControl"
-                spellcheck="false"
-                cdkTextareaAutosize
-                cdkAutosizeMinRows="20"
-                cdkAutosizeMaxRows="30"
-            >
-            </textarea>
-            <mat-error *ngIf="urlFilterOptionsFormControl.errors">
-                {{ urlFilterOptionsFormControlErrors }}
-            </mat-error>
-        </mat-form-field>
+        <p>
+            <mat-form-field appearance="fill">
+                <mat-label>
+                    Refresh Rate
+                </mat-label>
+                <input
+                    id="refreshRate"
+                    matInput
+                    type="number"
+                    [formControl]="refreshRateFormControl"
+                    [min]="MIN_REFRESH_RATE"
+                    [max]="MAX_REFRESH_RATE"
+                    [step]="STEP_REFRESH_RATE"
+                >
+                <span matSuffix>
+                    ms
+                </span>
+                <mat-error *ngIf="refreshRateFormControl.errors">
+                    Refresh Rate must be between {{ MIN_REFRESH_RATE }} and {{ MAX_REFRESH_RATE }} ms.
+                </mat-error>
+            </mat-form-field>
+        </p>
+        <p>
+            <mat-form-field appearance="fill">
+                <mat-label>
+                    URL Filter
+                </mat-label>
+                <textarea
+                    id="urlFilterOptions"
+                    matInput
+                    [rows]="20"
+                    [cols]="40"
+                    [formControl]="urlFilterOptionsFormControl"
+                    spellcheck="false"
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="20"
+                    cdkAutosizeMaxRows="30"
+                >
+                </textarea>
+                <mat-error *ngIf="urlFilterOptionsFormControl.errors">
+                    {{ urlFilterOptionsFormControlErrors }}
+                </mat-error>
+            </mat-form-field>
+        </p>
     </mat-card-content>
 </mat-card>
