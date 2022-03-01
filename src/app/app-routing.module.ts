@@ -7,8 +7,8 @@ import { ChromeSettingsResolver } from './shared/resolvers/chrome-settings.resol
 import { ChromeStorageResolver } from './shared/resolvers/chrome-storage.resolver';
 
 const routes: Routes = [
-    { 
-        path: '', 
+    {
+        path: '',
         component: ResponsesTableComponent,
         resolve: {
             settings: ChromeSettingsResolver,
@@ -19,7 +19,8 @@ const routes: Routes = [
         path: 'settings',
         component: SettingsComponent,
         resolve: {
-            settings: ChromeSettingsResolver
+            settings: ChromeSettingsResolver,
+            storage: ChromeStorageResolver
         }
     }
 ];

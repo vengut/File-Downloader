@@ -7,10 +7,10 @@ import { ChromeStorageService } from '../services/chrome/chrome-storage.service'
 @Injectable({ providedIn: 'root' })
 export class ChromeStorageResolver implements Resolve<ChromeStorageModel> {
     constructor(private chromeStorageService: ChromeStorageService) {}
-    
+
     resolve(_route: ActivatedRouteSnapshot): Observable<ChromeStorageModel> | Promise<ChromeStorageModel> | ChromeStorageModel {
         return from(this.chromeStorageService.getLocalStorage()).pipe(
-            map((storage) =>({
+            map((storage) => (<ChromeStorageModel>{
                 isListening: storage.isListening ?? false,
                 responses: storage.responses ?? []
             }))

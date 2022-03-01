@@ -10,9 +10,9 @@ export class ChromeSettingsResolver implements Resolve<ChromeSettingsModel> {
 
     resolve(_route: ActivatedRouteSnapshot): Observable<ChromeSettingsModel> | Promise<ChromeSettingsModel> | ChromeSettingsModel {
         return from(this.chromeSettingsService.getSyncStorage()).pipe(
-            map((sync) =>({
+            map((sync) => (<ChromeSettingsModel>{
                 urlFilterOptions: sync.urlFilterOptions ?? ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS,
-                responses: sync.refreshRate ?? ChromeSettingsService.DEFAULT_REFRESH_RATE
+                refreshRate: sync.refreshRate ?? ChromeSettingsService.DEFAULT_REFRESH_RATE
             }))
         );
     }
