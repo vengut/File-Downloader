@@ -164,7 +164,7 @@ export class ResponsesTableComponent implements OnInit {
 
         this.chromeStorageService.getStorage()
             .subscribe(storage => {
-                if (storage.responses) {
+                if (storage && storage.responses) {
                     this.responses = this.mapResponsesToTableModel(storage.responses);
                 }
                 this.lastRefresh = new Date();

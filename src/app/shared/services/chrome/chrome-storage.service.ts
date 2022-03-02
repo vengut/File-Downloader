@@ -92,7 +92,7 @@ export class ChromeStorageService {
             .pipe(
                 mergeMap(() => this.getLocalStorage()),
                 bufferTime(refreshRate),
-                map((changes) => changes.pop() ?? {})
+                map((changes) => changes.pop())
             );
     }
 

@@ -108,7 +108,7 @@ export class ChromeSettingsService {
             .pipe(
                 mergeMap(() => this.getSyncStorage()),
                 bufferTime(refreshRate),
-                map((changes) => changes.pop() ?? {})
+                map((changes) => changes.pop())
             );
     }
 

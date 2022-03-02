@@ -1,7 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {concatMap} from 'rxjs';
 import {ChromeStorageService} from './shared/services/chrome/chrome-storage.service';
-import {HttpResponseModel} from "./shared/services/chrome/chrome-web-request.model";
 import {FormControl} from "@angular/forms";
 import {PrimeNGConfig} from "primeng/api";
 
@@ -39,11 +38,11 @@ export class AppComponent implements OnInit {
 
         this.chromeStorageService.getStorage(1000)
             .subscribe(storage => {
-                if (storage.isListening) {
+                if (storage && storage.isListening) {
                     this.isListeningFormControl.setValue(storage.isListening);
                 }
 
-                if (storage.responses) {
+                if (storage && storage.responses) {
                     this.responsesLength = storage.responses.length;
                 }
             });

@@ -17,8 +17,8 @@
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} responses"
     >
         <ng-template pTemplate="caption">
-            <div class="d-flex justify-content-start">
-                <div class="p-2 me-2">
+            <div class="d-flex justify-content-start align-items-center">
+                <div class="p-2 me-1">
                     <p-button
                         pRipple
                         icon="pi pi-download"
@@ -30,26 +30,34 @@
                     >
                     </p-button>
                 </div>
+                <div class="p-2 me-1">
+                    <p-button
+                        pRipple
+                        icon="pi pi-refresh"
+                        label="Refresh"
+                        styleClass="p-button-info"
+                        [badge]="refreshRateLabel"
+                        (click)="refreshResponses()"
+                    >
+                    </p-button>
+                </div>
                 <div class="p-2 me-auto">
-                    <div class="p-buttonset">
-                        <p-button
-                            pRipple
-                            icon="pi pi-refresh"
-                            [label]="lastRefreshLabel"
-                            styleClass="p-button-info"
-                            [badge]="refreshRateLabel"
-                            (click)="refreshResponses()"
-                        >
-                        </p-button>
-                        <p-button
-                            pRipple
-                            icon="pi pi-times"
-                            label="Clear"
-                            styleClass="p-button-warning"
-                            (click)="clearResponses()"
-                        >
-                        </p-button>
-                    </div>
+                    <p-button
+                        pRipple
+                        icon="pi pi-times"
+                        label="Clear"
+                        styleClass="p-button-warning"
+                        (click)="clearResponses()"
+                    >
+                    </p-button>
+                </div>
+                <div class="p-2">
+                    <p-message
+                        severity="info"
+                        [text]="lastRefreshLabel"
+                        styleClass="p-button-info"
+                    >
+                    </p-message>
                 </div>
                 <div class="p-2">
                     <div class="p-input-icon-left">

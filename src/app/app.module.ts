@@ -31,6 +31,7 @@ import {SplitButtonModule} from "primeng/splitbutton";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatInputModule} from "@angular/material/input";
+import {MessageModule} from "primeng/message";
 
 
 @NgModule({
@@ -68,7 +69,8 @@ import {MatInputModule} from "@angular/material/input";
         SplitButtonModule,
         InputTextareaModule,
         MatFormFieldModule,
-        MatInputModule
+        MatInputModule,
+        MessageModule
     ],
     providers: [],
     bootstrap: [AppComponent]
