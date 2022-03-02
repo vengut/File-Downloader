@@ -1,4 +1,8 @@
 import sanitize from "sanitize-filename";
+import {FormControl, FormControlStatus} from "@angular/forms";
+import {combineLatest, debounceTime, distinctUntilChanged, Observable} from "rxjs";
+import {isEqual} from "lodash";
+import {ChromeSettingsService} from "./chrome/chrome-settings.service";
 
 export function prettyPrintObject<T>(obj: T){
     return JSON.stringify(obj, null, 4)
@@ -10,6 +14,16 @@ export function prettyPrintJson(json: string) {
 
 export function distinct<T>(list: T[]): T[] {
     return Array.from(new Set([... list]));
+}
+
+export function getFormControlChanges<T>(formControl: FormControl, debounceTimeMs: number = ChromeSettingsService.INPUT_DEBOUNCE): Observable<[T,  FormControlStatus]> {
+    return  combineLatest([
+        formControl.valueChanges,
+        formControl.statusChanges,
+    ]).pipe(
+        debounceTime(debounceTimeMs),
+        distinctUntilChanged((_old, _new) => isEqual(_old, _new))
+    );
 }
 
 export function getPathName(url: string): string {

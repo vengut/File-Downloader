@@ -11,16 +11,8 @@ import {PrimeNGConfig} from "primeng/api";
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-    public isListeningFormControl: FormControl = new FormControl(false);
-    public responses: HttpResponseModel[] = [];
-
-    public get responsesLength(): number {
-        if (this.responses) {
-            return this.responses.length;
-        }
-
-        return 0;
-    }
+    public isListeningFormControl: FormControl;
+    public responsesLength: number = 0;
 
     public get offListeningLabel(): string {
         if (this.responsesLength > 0) {
@@ -37,28 +29,27 @@ export class AppComponent implements OnInit {
     constructor(
         private chromeStorageService: ChromeStorageService,
         private primengConfig: PrimeNGConfig
-    ) { }
+    ) {
+        this.isListeningFormControl = new FormControl(false);
+        this.responsesLength = 0;
+    }
 
     ngOnInit() {
         this.primengConfig.ripple = true;
 
-        this.chromeStorageService.getStorage()
+        this.chromeStorageService.getStorage(1000)
             .subscribe(storage => {
                 if (storage.isListening) {
                     this.isListeningFormControl.setValue(storage.isListening);
                 }
 
                 if (storage.responses) {
-                    this.responses = storage.responses;
+                    this.responsesLength = storage.responses.length;
                 }
             });
 
         this.isListeningFormControl.valueChanges.pipe(
             concatMap((isListening) => this.chromeStorageService.setIsListening(isListening))
         ).subscribe();
-    }
-
-    public clearResponses() {
-        this.chromeStorageService.clearResponses().subscribe();
     }
 }

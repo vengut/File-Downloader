@@ -1,12 +1,11 @@
 import {Component, OnInit } from '@angular/core';
 import { ChromeSettingsService } from '../shared/services/chrome/chrome-settings.service';
 import {FormControl, FormControlStatus, Validators} from "@angular/forms";
-import { SelectItemList, SelectItemListSchema } from './settings.model';
-import { JsonTypeValidator } from '../shared/services/zod-extensions';
-import {combineLatest, concatMap, debounceTime, distinctUntilChanged, forkJoin, Observable, of} from "rxjs";
-import {prettyPrintJson, prettyPrintObject} from "../shared/services/utilities";
-import {isEqual} from "lodash";
-import { ActivatedRoute } from '@angular/router';
+import {SelectItemListSchema } from './settings.model';
+import {JsonTypeValidator} from '../shared/services/zod-extensions';
+import {concatMap, forkJoin, of} from "rxjs";
+import {getFormControlChanges, prettyPrintJson, prettyPrintObject} from "../shared/services/utilities";
+import {ActivatedRoute} from '@angular/router';
 
 @Component({
     selector: 'settings',
@@ -60,7 +59,7 @@ export class SettingsComponent implements OnInit {
                 }
             });
 
-        this.getFormControlChanges<number>(this.refreshRateFormControl)
+        getFormControlChanges<number>(this.refreshRateFormControl, 250)
             .pipe(
                 concatMap(([refreshRate, status]: [number, FormControlStatus]) => {
                     if (status === 'VALID') {
@@ -75,7 +74,7 @@ export class SettingsComponent implements OnInit {
             )
             .subscribe();
 
-        this.getFormControlChanges<string>(this.urlFilterOptionsFormControl)
+        getFormControlChanges<string>(this.urlFilterOptionsFormControl, 1000)
             .pipe(
                 concatMap(([json, status]: [string, FormControlStatus]) => {
                     if (status === 'VALID') {
@@ -89,16 +88,6 @@ export class SettingsComponent implements OnInit {
                 })
             )
             .subscribe();
-    }
-
-    private getFormControlChanges<T>(formControl: FormControl): Observable<[T,  FormControlStatus]> {
-        return  combineLatest([
-            formControl.valueChanges,
-            formControl.statusChanges,
-        ]).pipe(
-            debounceTime(1000),
-            distinctUntilChanged((_old, _new) => isEqual(_old, _new))
-        );
     }
 
 }

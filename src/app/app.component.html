@@ -7,25 +7,14 @@
     </button>
     <span>Sniffer</span>
     <span style="flex: 1 1 auto;"></span>
-    <div class="p-buttonset">
-        <p-toggleButton
-            [formControl]="isListeningFormControl"
-            [offLabel]="offListeningLabel"
-            [onLabel]="onListeningLabel"
-            onIcon="pi pi-spin pi-spinner"
-            offIcon="pi pi-sync"
-        >
-        </p-toggleButton>
-        <button
-            pButton
-            type="button"
-            icon="pi pi-times"
-            label="Clear"
-            class="p-button-danger"
-            (click)="clearResponses()"
-        >
-        </button>
-    </div>
+    <p-toggleButton
+        [formControl]="isListeningFormControl"
+        [offLabel]="offListeningLabel"
+        [onLabel]="onListeningLabel"
+        onIcon="pi pi-spin pi-spinner"
+        offIcon="pi pi-sync"
+    >
+    </p-toggleButton>
 </mat-toolbar>
 
 <mat-sidenav-container>

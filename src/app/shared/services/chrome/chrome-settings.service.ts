@@ -8,9 +8,7 @@ import {
     of,
     mergeMap,
     concat,
-    filter,
-    bufferTime,
-    distinctUntilChanged
+    bufferTime, concatMap,
 } from 'rxjs';
 import {ChromeSettingsKey, ChromeSettingsModel} from './chrome-settings.model';
 import {StorageNamespace} from "./chrome-storage.model";
@@ -19,15 +17,16 @@ import {SelectItemList} from "../../../settings/settings.model";
 
 @Injectable({providedIn: 'root'})
 export class ChromeSettingsService {
+    public static readonly INPUT_DEBOUNCE: number = 500;
+    public static readonly DEFAULT_REFRESH_RATE: number = 5000;
+    public static readonly MIN_REFRESH_RATE: number = 3000;
+    public static readonly MAX_REFRESH_RATE: number = 30000;
+    public static readonly STEP_REFRESH_RATE: number = 500;
     public static readonly DEFAULT_URL_FILTER_OPTIONS: SelectItemList = [
         { value: '.mp3', label: 'MP3', isSelected: true },
         { value: '.m3u8', label: 'HLS' },
         { value: '.mp4', label: 'MP4' }
     ];
-    public static readonly DEFAULT_REFRESH_RATE: number = 5000;
-    public static readonly MIN_REFRESH_RATE: number = 3000;
-    public static readonly MAX_REFRESH_RATE: number = 30000;
-    public static readonly STEP_REFRESH_RATE: number = 500;
 
     constructor() { }
 
@@ -35,11 +34,22 @@ export class ChromeSettingsService {
         return chrome.storage.sync.get();
     }
 
-    public getSettings(refreshRate: number = ChromeSettingsService.DEFAULT_REFRESH_RATE) {
-        return concat(
-            from(this.getSettingsChanges(refreshRate)),
-            this.getSettingsChanges(refreshRate)
-        );
+    public getSettings(optionalRefreshRate?: number) {
+        let refreshRateSubscription = this.getRefreshRate();
+
+        if (optionalRefreshRate) {
+            refreshRateSubscription = of(optionalRefreshRate);
+        }
+
+        return refreshRateSubscription
+            .pipe(
+                concatMap((refreshRate) => {
+                    return concat(
+                        from(this.getSettingsChanges(refreshRate)),
+                        this.getSettingsChanges(refreshRate)
+                    );
+                })
+            );
     }
 
     public setUrlFilterOptions(newUrlFilterOptions: SelectItemList): Observable<SelectItemList> {

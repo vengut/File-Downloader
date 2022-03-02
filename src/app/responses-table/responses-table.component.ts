@@ -1,13 +1,13 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../shared/services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
-import {distinct, FileName, getPathName} from "../shared/services/utilities";
+import {distinct, FileName, getFormControlChanges, getPathName} from "../shared/services/utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel} from "./responses-table.model";
 import {Table} from "primeng/table";
 import {FilterService, MenuItem} from "primeng/api";
 import {DatePipe} from "@angular/common";
 import {groupBy, isEqual, orderBy} from "lodash"
-import {concatMap, delay, distinctUntilChanged, finalize, from, mergeMap, of, tap} from "rxjs";
+import {concatMap, debounceTime, delay, distinctUntilChanged, finalize, forkJoin, from, mergeMap, of, tap} from "rxjs";
 import {ToastService, ToastType} from "../shared/services/toast.service";
 import {ChromeDownloadsService} from '../shared/services/chrome/chrome-downloads.service';
 import {ChromeSettingsService} from '../shared/services/chrome/chrome-settings.service';
@@ -28,18 +28,19 @@ export class ResponsesTableComponent implements OnInit {
     public readonly DATE_FORMAT: string = 'medium';
     public readonly DOWNLOAD_DELAY: number = 2000;
 
-    public isLoading: boolean = false;
-    public responses: HttpResponseTableModel[] = [];
-    public refreshRate: number = 0;
-    public lastRefresh: Date = new Date("1970");
-
     @ViewChild('dt', {static: false}) public table!: Table;
 
-    public columns: HttpResponseTableColumn[] = [];
-    public globalFilter: string = "";
-    public selectedResponses: HttpResponseTableModel[] = [];
-    public allUrlFilterOptions: SelectItemList = [];
-    public urlFilterFormControl: FormControl = new FormControl([]);
+    public responses: HttpResponseTableModel[];
+    public selectedResponses: HttpResponseTableModel[];
+    public isLoading: boolean;
+
+    public columns: HttpResponseTableColumn[];
+    public refreshRate: number;
+    public lastRefresh: Date;
+
+    public allUrlFilterOptions: SelectItemList;
+    public urlFilterFormControl: FormControl;
+    public globalFilterFormControl: FormControl;
 
     public get selectedUrlFilter(): SelectItemList {
         return this.urlFilterFormControl.value ?? [];
@@ -120,12 +121,22 @@ export class ResponsesTableComponent implements OnInit {
         private clipboard: Clipboard,
         private activatedRoute: ActivatedRoute
     ) {
+        this.responses = [];
+        this.isLoading = false;
+        this.selectedResponses = [];
+
         this.columns = [
             { field: 'url', header: 'URL', sortable: true },
             { field: 'date', header: 'Date', sortable: true },
             { field: 'type', header: 'Type', sortable: false },
             { field: 'tab', header: 'Tab', sortable: true },
         ];
+        this.refreshRate = 100000;
+        this.lastRefresh = new Date("1970");
+
+        this.allUrlFilterOptions = [];
+        this.urlFilterFormControl = new FormControl([]);
+        this.globalFilterFormControl = new FormControl("");
 
         this.filterService.register('containedInList', (value: string, filters: SelectItemList): boolean => {
             if (filters === undefined) {
@@ -139,11 +150,19 @@ export class ResponsesTableComponent implements OnInit {
     ngOnInit() {
         console.log("Responses Route:", this.activatedRoute.snapshot.data);
 
-        this.chromeSettingsService.getRefreshRate()
-            .pipe(
-                tap(refreshRate => this.refreshRate = refreshRate),
-                concatMap(refreshRate => this.chromeStorageService.getStorage(this.refreshRate))
-            )
+        forkJoin([
+            this.chromeSettingsService.getRefreshRate(),
+            this.chromeSettingsService.getUrlFilterOptions()
+        ])
+            .subscribe(([refreshRate, allUrlFilterOptions]) => {
+                this.refreshRate = refreshRate;
+
+                this.allUrlFilterOptions = allUrlFilterOptions;
+                this.urlFilterFormControl.setValue(this.allUrlFilterOptions.filter(u => u.isSelected));
+                this.filterUrls();
+            });
+
+        this.chromeStorageService.getStorage()
             .subscribe(storage => {
                 if (storage.responses) {
                     this.responses = this.mapResponsesToTableModel(storage.responses);
@@ -151,16 +170,9 @@ export class ResponsesTableComponent implements OnInit {
                 this.lastRefresh = new Date();
             });
 
-        this.chromeSettingsService.getUrlFilterOptions().subscribe((allUrlFilterOptions)=> {
-            this.allUrlFilterOptions = allUrlFilterOptions;
-            this.urlFilterFormControl.setValue(this.allUrlFilterOptions.filter(u => u.isSelected));
-            this.filterUrls();
-        });
-
-        this.urlFilterFormControl.valueChanges
+        getFormControlChanges<SelectItemList>(this.urlFilterFormControl, 250)
             .pipe(
-                distinctUntilChanged((a, b) => isEqual(a, b)),
-                concatMap((selectedUrlFilterOptions: SelectItemList) => {
+                concatMap(([selectedUrlFilterOptions, _formState]) => {
                     const urlFilterOptions = this.allUrlFilterOptions
                         .map(option => ({
                             isSelected: selectedUrlFilterOptions.some(s => s.value === option.value),
@@ -168,12 +180,17 @@ export class ResponsesTableComponent implements OnInit {
                             value: option.value
                         }))
                         .slice();
-
-                    this.filterUrls();
                     return this.chromeSettingsService.setUrlFilterOptions(urlFilterOptions);
                 })
             )
-            .subscribe();
+            .subscribe(() => {
+                this.filterUrls();
+            });
+
+        getFormControlChanges<string>(this.globalFilterFormControl, 1000)
+            .subscribe(([globalFilter, _status]) => {
+                this.table.filterGlobal(globalFilter, 'contains');
+            });
     }
 
     public filterUrls() {
@@ -248,6 +265,11 @@ export class ResponsesTableComponent implements OnInit {
                 this.responses = this.mapResponsesToTableModel(responses);
                 this.lastRefresh = new Date();
             });
+    }
+
+    public clearResponses() {
+        this.chromeStorageService.clearResponses()
+            .subscribe(() => this.refreshResponses());
     }
 
     private mapResponsesToTableModel(responseData: HttpResponseModel[]): HttpResponseTableModel[] {

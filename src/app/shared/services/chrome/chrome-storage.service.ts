@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {
     bufferTime,
-    concat,
+    concat, concatMap,
     from,
     fromEventPattern,
     map,
@@ -20,17 +20,28 @@ import { ChromeSettingsService } from './chrome-settings.service';
 
 @Injectable({providedIn: 'root'})
 export class ChromeStorageService {
-    constructor() {}
+    constructor(private chromeSettingsService: ChromeSettingsService) {}
 
     public getLocalStorage(): Promise<ChromeStorageModel> {
         return chrome.storage.local.get();
     }
 
-    public getStorage(refreshRate: number = ChromeSettingsService.DEFAULT_REFRESH_RATE) {
-        return concat(
-            from(this.getLocalStorage()),
-            this.getStorageChanges(refreshRate)
-        );
+    public getStorage(optionalRefreshRate?: number) {
+        let refreshRateSubscription = this.chromeSettingsService.getRefreshRate();
+
+        if (optionalRefreshRate) {
+            refreshRateSubscription = of(optionalRefreshRate);
+        }
+
+        return refreshRateSubscription
+            .pipe(
+                concatMap((refreshRate) => {
+                    return concat(
+                        from(this.getLocalStorage()),
+                        this.getStorageChanges(refreshRate)
+                    );
+                })
+            );
     }
 
     public setIsListening(newIsListening: boolean): Observable<boolean> {

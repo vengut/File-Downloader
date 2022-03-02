@@ -18,25 +18,35 @@
     >
         <ng-template pTemplate="caption">
             <div class="d-flex justify-content-start">
+                <div class="p-2 me-2">
+                    <p-button
+                        pRipple
+                        icon="pi pi-download"
+                        label="Download"
+                        styleClass="p-button-success"
+                        [badge]="selectedResponsesLength.toString()"
+                        (click)="downloadUrls()"
+                        [disabled]="!isDownloadsEnabled"
+                    >
+                    </p-button>
+                </div>
                 <div class="p-2 me-auto">
                     <div class="p-buttonset">
                         <p-button
                             pRipple
                             icon="pi pi-refresh"
                             [label]="lastRefreshLabel"
-                            styleClass="p-button-help"
+                            styleClass="p-button-info"
                             [badge]="refreshRateLabel"
                             (click)="refreshResponses()"
                         >
                         </p-button>
                         <p-button
                             pRipple
-                            icon="pi pi-download"
-                            label="Download"
-                            styleClass="p-button-success"
-                            [badge]="selectedResponsesLength.toString()"
-                            (click)="downloadUrls()"
-                            [disabled]="!isDownloadsEnabled"
+                            icon="pi pi-times"
+                            label="Clear"
+                            styleClass="p-button-warning"
+                            (click)="clearResponses()"
                         >
                         </p-button>
                     </div>
@@ -48,8 +58,7 @@
                             pInputText
                             type="text"
                             class="p-column-filter-row"
-                            [(ngModel)]="globalFilter"
-                            (input)="dt.filterGlobal(globalFilter, 'contains')"
+                            [formControl]="globalFilterFormControl"
                             placeholder="Search Responses"
                         />
                     </div>
