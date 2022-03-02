@@ -1,6 +1,8 @@
 import {HttpResponseModel} from "./app/shared/services/chrome/chrome-web-request.model";
 import {ChromeStorageKey} from "./app/shared/services/chrome/chrome-storage.model";
 
+const EXTENSION_TITLE: string = "Sniffer";
+
 chrome.action.onClicked.addListener((_tab) => {
     chrome.runtime.openOptionsPage();
 });
@@ -30,9 +32,11 @@ chrome.webNavigation.onBeforeNavigate.addListener(() =>{
                     };
 
                     if (responseDetails.tabId > 0) {
-                        chrome.tabs.get(responseDetails.tabId).then(tab =>{
-                                response.tab = tab.title ? tab.title : "Undefined";
-                                updateResponses(responses, response);
+                        chrome.tabs.get(responseDetails.tabId).then(tab => {
+                                if (tab.title !== EXTENSION_TITLE) {
+                                    response.tab = tab.title ? tab.title : "Undefined";
+                                    updateResponses(responses, response);
+                                }
                             },
                             _err => {
                                 response.tab = "Undefined";
@@ -55,7 +59,9 @@ chrome.webNavigation.onBeforeNavigate.addListener(() =>{
 function updateResponses(responses: HttpResponseModel[], response: HttpResponseModel) {
     responses = [...responses, response];
 
-    chrome.storage.local.set({responses: responses}, function () {
-        console.log(`Updated responses.`);
-    });
+    chrome.storage.local.set({responses: responses}).then(
+        () => {
+            console.log(`Updated responses.`);
+        }
+    );
 }
