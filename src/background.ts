@@ -33,7 +33,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(() =>{
 
                     if (responseDetails.tabId > 0) {
                         chrome.tabs.get(responseDetails.tabId).then(tab => {
-                                if (tab.title !== EXTENSION_TITLE) {
+                                if (!tab.title?.includes(EXTENSION_TITLE)) {
                                     response.tab = tab.title ? tab.title : "Undefined";
                                     updateResponses(responses, response);
                                 }
