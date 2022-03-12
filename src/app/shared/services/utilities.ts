@@ -3,6 +3,7 @@ import {FormControl, FormControlStatus} from "@angular/forms";
 import {combineLatest, debounceTime, distinctUntilChanged, Observable} from "rxjs";
 import {isEqual} from "lodash";
 import {ChromeSettingsService} from "./chrome/chrome-settings.service";
+import {Table} from "primeng/table";
 
 export function prettyPrintObject<T>(obj: T){
     return JSON.stringify(obj, null, 4)
@@ -14,6 +15,21 @@ export function prettyPrintJson(json: string) {
 
 export function distinct<T>(list: T[]): T[] {
     return Array.from(new Set([... list]));
+}
+
+export function isTableFiltered(table: Table): boolean {
+    return Object.values(table.filters).map(filter => {
+        let filters: any[];
+
+        if (Array.isArray(filter)) {
+            filters = [...filter.map(f => f.value)];
+        }
+        else {
+            filters = [ filter.value ];
+        }
+
+        return filters.some(f => f !== null && f !== undefined);
+    }).some(isFiltered => isFiltered);
 }
 
 export function getFormControlChanges<T>(formControl: FormControl, debounceTimeMs: number = ChromeSettingsService.INPUT_DEBOUNCE): Observable<[T,  FormControlStatus]> {

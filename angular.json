@@ -32,7 +32,8 @@
             "assets": [
               "src/assets",
               "src/manifest.json",
-              "src/sniffer.png"
+              "src/sniffer.png",
+              "src/snifferActive.png"
             ],
             "styles": [
               "src/styles.scss",

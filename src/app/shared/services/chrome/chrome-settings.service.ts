@@ -45,7 +45,7 @@ export class ChromeSettingsService {
             .pipe(
                 concatMap((refreshRate) => {
                     return concat(
-                        from(this.getSettingsChanges(refreshRate)),
+                        from(this.getSyncStorage()),
                         this.getSettingsChanges(refreshRate)
                     );
                 })

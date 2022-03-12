@@ -1,7 +1,7 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../shared/services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
-import {distinct, FileName, getFormControlChanges, getPathName} from "../shared/services/utilities";
+import {distinct, FileName, getFormControlChanges, getPathName, isTableFiltered} from "../shared/services/utilities";
 import {HttpResponseTableColumn, HttpResponseTableModel, SortOrder} from "./responses-table.model";
 import {Table} from "primeng/table";
 import {FilterService, MenuItem} from "primeng/api";
@@ -167,7 +167,9 @@ export class ResponsesTableComponent implements OnInit {
                 if (storage && storage.responses) {
                     const allResponses = this.mapResponsesToTableModel(storage.responses);
                     this.allResponses = this.filterDuplicateResponses(allResponses);
-                    this.titleService.updateFilteredCount(this.getFilteredResponses().length);
+
+                    const filteredCount = this.getFilteredResponsesCount();
+                    this.titleService.updateFilteredCount(filteredCount);
                 }
                 this.lastRefresh = new Date();
             });
@@ -284,8 +286,9 @@ export class ResponsesTableComponent implements OnInit {
         }));
     }
 
-    private getFilteredResponses(): HttpResponseTableModel[] {
-        return this.table.hasFilter() ? this.table.filteredValue ?? [] : [];
+    private getFilteredResponsesCount(): number {
+        const filteredResponses = isTableFiltered(this.table) ? this.table.filteredValue ?? [] : this.allResponses;
+        return filteredResponses.length;
     }
 
     private filterDuplicateResponses(responses: HttpResponseTableModel[]): HttpResponseTableModel[] {
