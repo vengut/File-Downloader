@@ -3,7 +3,7 @@ import {concatMap} from 'rxjs';
 import {ChromeStorageService} from './shared/services/chrome/chrome-storage.service';
 import {FormControl} from "@angular/forms";
 import {PrimeNGConfig} from "primeng/api";
-import { Title } from '@angular/platform-browser';
+import { TitleService } from './shared/services/title.service';
 
 @Component({
     selector: 'app-root',
@@ -33,7 +33,7 @@ export class AppComponent implements OnInit {
     constructor(
         private chromeStorageService: ChromeStorageService,
         private primengConfig: PrimeNGConfig,
-        private titleService: Title
+        private titleService: TitleService
     ) {
         this.isListeningFormControl = new FormControl(false);
         this.responsesLength = 0;
@@ -47,22 +47,13 @@ export class AppComponent implements OnInit {
 
                 if (storage && storage.isListening !== undefined) {
                     this.isListeningFormControl.setValue(storage.isListening);
+                    this.titleService.updateIsLoading(storage.isListening);
                 }
 
                 if (storage && storage.responses !== undefined) {
                     this.responsesLength = storage.responses.length;
+                    this.titleService.updateTotalCount(storage.responses.length);
                 }
-
-                let title  = `Sniffer`;
-
-                if (this.isListening) {
-                    title = `Sniffer... (${this.responsesLength})`
-                }
-                else if (this.responsesLength > 0) {
-                    title = `Sniffer (${this.responsesLength})`;
-                }
-
-                this.titleService.setTitle(title);
             });
 
         this.isListeningFormControl.valueChanges.pipe(

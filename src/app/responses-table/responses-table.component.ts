@@ -2,12 +2,12 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {HttpResponseModel, ResourceTypes} from "../shared/services/chrome/chrome-web-request.model";
 import {SelectItem} from "primeng/api/selectitem";
 import {distinct, FileName, getFormControlChanges, getPathName} from "../shared/services/utilities";
-import {HttpResponseTableColumn, HttpResponseTableModel} from "./responses-table.model";
+import {HttpResponseTableColumn, HttpResponseTableModel, SortOrder} from "./responses-table.model";
 import {Table} from "primeng/table";
 import {FilterService, MenuItem} from "primeng/api";
 import {DatePipe} from "@angular/common";
-import {groupBy, isEqual, orderBy} from "lodash"
-import {concatMap, debounceTime, delay, distinctUntilChanged, finalize, forkJoin, from, mergeMap, of, tap} from "rxjs";
+import {groupBy, orderBy} from "lodash"
+import {concatMap, delay, finalize, forkJoin, from, of} from "rxjs";
 import {ToastService, ToastType} from "../shared/services/toast.service";
 import {ChromeDownloadsService} from '../shared/services/chrome/chrome-downloads.service';
 import {ChromeSettingsService} from '../shared/services/chrome/chrome-settings.service';
@@ -16,8 +16,7 @@ import {ChromeStorageService} from "../shared/services/chrome/chrome-storage.ser
 import {FormControl} from "@angular/forms";
 import {SelectItemList} from "../settings/settings.model";
 import { ActivatedRoute } from '@angular/router';
-import { ChromeStorageModel } from '../shared/services/chrome/chrome-storage.model';
-import { ChromeSettingsModel } from '../shared/services/chrome/chrome-settings.model';
+import { TitleService } from '../shared/services/title.service';
 
 @Component({
     selector: 'responses-table',
@@ -30,7 +29,7 @@ export class ResponsesTableComponent implements OnInit {
 
     @ViewChild('dt', {static: false}) public table!: Table;
 
-    public responses: HttpResponseTableModel[];
+    public allResponses: HttpResponseTableModel[];
     public selectedResponses: HttpResponseTableModel[];
     public isLoading: boolean;
 
@@ -51,8 +50,8 @@ export class ResponsesTableComponent implements OnInit {
     }
 
     public get tabs(): SelectItem[] {
-        if (this.responses) {
-            const tabNames = distinct(this.responses.map(r => r.tab));
+        if (this.allResponses) {
+            const tabNames = distinct(this.allResponses.map(r => r.tab));
             return tabNames.map(tab => (<SelectItem> { label: this.getTabDisplay(tab, 20), value: tab }));
         }
         return [];
@@ -80,7 +79,7 @@ export class ResponsesTableComponent implements OnInit {
     }
 
     public get responseActions(): { [id: string]: MenuItem[] } {
-        return this.responses.reduce((buttonActions, response) => {
+        return this.allResponses.reduce((buttonActions, response) => {
             buttonActions[response.id] = [
                 {
                     label: "Save As",
@@ -119,9 +118,10 @@ export class ResponsesTableComponent implements OnInit {
         private chromeDownloadsService: ChromeDownloadsService,
         private toastService: ToastService,
         private clipboard: Clipboard,
-        private activatedRoute: ActivatedRoute
+        private activatedRoute: ActivatedRoute,
+        private titleService: TitleService
     ) {
-        this.responses = [];
+        this.allResponses = [];
         this.isLoading = false;
         this.selectedResponses = [];
 
@@ -165,7 +165,9 @@ export class ResponsesTableComponent implements OnInit {
         this.chromeStorageService.getStorage()
             .subscribe(storage => {
                 if (storage && storage.responses) {
-                    this.responses = this.mapResponsesToTableModel(storage.responses);
+                    const allResponses = this.mapResponsesToTableModel(storage.responses);
+                    this.allResponses = this.filterDuplicateResponses(allResponses);
+                    this.titleService.updateFilteredCount(this.getFilteredResponses().length);
                 }
                 this.lastRefresh = new Date();
             });
@@ -213,7 +215,7 @@ export class ResponsesTableComponent implements OnInit {
                     this.toastService.toast(ToastType.Success, "Download Started", message);
                 }
             },
-            error: (err: string) =>{
+            error: (err: string) => {
                 this.toastService.toast(ToastType.Error, "Failed to Start Download", err);
             }
         });
@@ -222,16 +224,10 @@ export class ResponsesTableComponent implements OnInit {
     public downloadUrls() {
         this.isLoading = true;
 
-        const groupedResponses = groupBy(this.selectedResponses, a => a.urlDisplay);
+        let selectedResponses = this.selectedResponses.slice();
+        selectedResponses = this.sortResponses(selectedResponses)
 
-        let uniqueResponses: HttpResponseTableModel[] = [];
-        Object.entries(groupedResponses).forEach(([_key, value])=>{
-            const mostRecentResponse = orderBy(value, 'date', 'desc')[0];
-            uniqueResponses.push(mostRecentResponse);
-        });
-        uniqueResponses = orderBy(uniqueResponses, 'date', 'asc');
-
-        from(uniqueResponses).pipe(
+        from(selectedResponses).pipe(
             concatMap(response => of(response).pipe(delay(this.DOWNLOAD_DELAY))),
             finalize(() => this.isLoading = false)
         ).subscribe(response =>{
@@ -262,14 +258,17 @@ export class ResponsesTableComponent implements OnInit {
                 finalize(() => this.isLoading = false)
             )
             .subscribe(responses => {
-                this.responses = this.mapResponsesToTableModel(responses);
+                this.allResponses = this.mapResponsesToTableModel(responses);
                 this.lastRefresh = new Date();
             });
     }
 
     public clearResponses() {
         this.chromeStorageService.clearResponses()
-            .subscribe(() => this.refreshResponses());
+            .subscribe(() => {
+                this.refreshResponses();
+                this.selectedResponses = [];
+            });
     }
 
     private mapResponsesToTableModel(responseData: HttpResponseModel[]): HttpResponseTableModel[] {
@@ -283,6 +282,27 @@ export class ResponsesTableComponent implements OnInit {
             tab: r.tab,
             tabDisplay: this.getTabDisplay(r.tab)
         }));
+    }
+
+    private getFilteredResponses(): HttpResponseTableModel[] {
+        return this.table.hasFilter() ? this.table.filteredValue ?? [] : [];
+    }
+
+    private filterDuplicateResponses(responses: HttpResponseTableModel[]): HttpResponseTableModel[] {
+        const groupedResponses = groupBy(responses, a => getPathName(a.url));
+
+        let uniqueResponses: HttpResponseTableModel[] = [];
+        Object.entries(groupedResponses).forEach(([_key, value])=>{
+            const mostRecentResponse = orderBy(value, 'date', 'desc')[0];
+            uniqueResponses.push(mostRecentResponse);
+        });
+
+        return uniqueResponses;
+    }
+
+    private sortResponses(responses: HttpResponseTableModel[]): HttpResponseTableModel[] {
+        const sortOrder = this.table.sortOrder === SortOrder.Ascending ? "asc": "desc";
+        return orderBy(responses, this.table.sortField, sortOrder);
     }
 
     private getDateDisplay(timestamp: number, format: string = this.DATE_FORMAT): string {

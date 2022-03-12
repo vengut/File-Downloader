@@ -15,3 +15,8 @@ export interface HttpResponseTableModel {
     tab: string;
     tabDisplay: string;
 }
+
+export enum SortOrder {
+    Descending = -1,
+    Ascending = 1
+}
