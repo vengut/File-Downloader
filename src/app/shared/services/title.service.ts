@@ -78,18 +78,14 @@ export class TitleService {
     }
 
     private updateTitle(replacer: string) {
-        const startTime = new Date().getTime();
-
         const currentTitle = this.title.getTitle();
         const matches = currentTitle.match(this.titleRegex)?.slice();
         const newTitle = currentTitle
             .replace(this.titleRegex, replacer)
             .replace(/  /g, " ");
         this.title.setTitle(newTitle);
-        
-        const endTime = new Date().getTime();
 
-        console.log(currentTitle, matches, replacer, newTitle, startTime, endTime - startTime);
+        console.log(currentTitle, matches, replacer, newTitle);
     }
 }
 
