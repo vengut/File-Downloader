@@ -1,21 +1,56 @@
 import {HttpResponseModel} from "./app/shared/services/chrome/chrome-web-request.model";
 import {ChromeStorageKey} from "./app/shared/services/chrome/chrome-storage.model";
+import { getLocalStorage } from "./app/shared/services/chrome/chrome-storage.service";
 
 const EXTENSION_TITLE: string = "Sniffer";
+const ALARM_NAME: string = 'WakeUpAlarm';
+const periodInMinutes: number = 0.0016;
 
-chrome.action.onClicked.addListener((_tab) => {
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.alarms.create(ALARM_NAME, { periodInMinutes });
+});
+
+chrome.runtime.onStartup.addListener(() => {
+    chrome.alarms.create(ALARM_NAME, { periodInMinutes });
+});
+
+chrome.alarms.onAlarm.addListener(() => {
+    //Keeps extension from going into inactive mode.
+});
+
+startUp();
+
+function startUp() {
+    if (!chrome.action.onClicked.hasListener(onActionClickedListener)) {
+        chrome.action.onClicked.addListener(onActionClickedListener);
+    }
+
+    if (!chrome.storage.onChanged.hasListener(onStorageChangedListener)) {
+        intializeIcon();
+        chrome.storage.onChanged.addListener(onStorageChangedListener);
+    }
+
+    if (!chrome.webNavigation.onBeforeNavigate.hasListener(onBeforeNavigateListener)) {
+        chrome.webNavigation.onBeforeNavigate.addListener(onBeforeNavigateListener);
+    }
+
+    if (!chrome.webRequest.onResponseStarted.hasListener(onResponseStartedListener)) {
+        chrome.webRequest.onResponseStarted.addListener(onResponseStartedListener, { urls: ["<all_urls>"] });
+    }
+}
+
+function intializeIcon() {
+    return getLocalStorage().then((result) => {
+        setIcon(result.isListening);
+        setBadgeText(result.responses);
+    });
+}
+
+function onActionClickedListener(_tab: chrome.tabs.Tab) {
     chrome.runtime.openOptionsPage();
-});
+}
 
-chrome.storage.local.get([ChromeStorageKey.IsListening, ChromeStorageKey.Responses]).then((result) => {
-    let isListening: boolean = result[ChromeStorageKey.IsListening];
-    setIcon(isListening);
-    
-    let responses = result[ChromeStorageKey.Responses];
-    setBadgeText(responses);
-});
-
-chrome.storage.onChanged.addListener((changes) => {
+function onStorageChangedListener(changes: { [key: string]: chrome.storage.StorageChange; }, _areaName: "sync" | "local" | "managed") {
     if (changes && changes[ChromeStorageKey.IsListening]) {
         const isListening: boolean = changes[ChromeStorageKey.IsListening]?.newValue;
         setIcon(isListening);
@@ -25,55 +60,56 @@ chrome.storage.onChanged.addListener((changes) => {
         const responses: HttpResponseModel[] = changes[ChromeStorageKey.Responses]?.newValue;
         setBadgeText(responses);
     }
-})
+}
 
-chrome.webNavigation.onBeforeNavigate.addListener(() =>{
-    chrome.webRequest.onResponseStarted.addListener((responseDetails) => {
-            chrome.storage.local.get([ChromeStorageKey.IsListening, ChromeStorageKey.Responses]).then((result) => {
-                let isListening: boolean = result[ChromeStorageKey.IsListening];
+function onBeforeNavigateListener(_details: chrome.webNavigation.WebNavigationParentedCallbackDetails) {
+    console.log(`Added new Web Navigate Listener ${new Date()}`);
+}
 
-                if (isListening) {
-                    let responses = result[ChromeStorageKey.Responses];
+function onResponseStartedListener(responseDetails: chrome.webRequest.WebResponseCacheDetails) {
+    getLocalStorage().then((storage) => {
+        let isListening: boolean = storage.isListening;
 
-                    if (responses === undefined || responses === null) {
-                        responses = [];
-                    }
+        if (isListening) {
+            let responses = storage.responses;
 
-                    const response: HttpResponseModel = {
-                        id: responseDetails.requestId,
-                        url: responseDetails.url,
-                        method: responseDetails.method,
-                        timestamp: responseDetails.timeStamp,
-                        status: responseDetails.statusCode,
-                        statusText: responseDetails.statusLine,
-                        type: responseDetails.type,
-                        fromCache: responseDetails.fromCache,
-                        tab: ""
-                    };
+            const response: HttpResponseModel = {
+                id: responseDetails.requestId,
+                url: responseDetails.url,
+                method: responseDetails.method,
+                timestamp: responseDetails.timeStamp,
+                status: responseDetails.statusCode,
+                statusText: responseDetails.statusLine,
+                type: responseDetails.type,
+                fromCache: responseDetails.fromCache,
+                tab: ""
+            };
 
-                    if (responseDetails.tabId > 0) {
-                        chrome.tabs.get(responseDetails.tabId).then(tab => {
-                                if (!tab.title?.includes(EXTENSION_TITLE)) {
-                                    response.tab = tab.title ? tab.title : "Undefined";
-                                    updateResponses(responses, response);
-                                }
-                            },
-                            _err => {
-                                response.tab = "Undefined";
-                                updateResponses(responses, response);
-                            });
-                    }
-                    else {
+            if (responses.findIndex(r => r.id === response.id) !== -1) {
+                console.log("Dupe");
+                return;
+            }
+
+            if (responseDetails.tabId > 0) {
+                chrome.tabs.get(responseDetails.tabId).then(tab => {
+                        if (!tab.title?.includes(EXTENSION_TITLE)) {
+                            response.tab = tab.title ? tab.title : "Undefined";
+                            updateResponses(responses, response);
+                        }
+                    },
+                    _err => {
                         response.tab = "Undefined";
                         updateResponses(responses, response);
-                    }
+                    });
+            }
+            else {
+                response.tab = "Undefined";
+                updateResponses(responses, response);
+            }
 
-                }
-            });
-        },
-        {urls: ["<all_urls>"]}
-    );
-});
+        }
+    });
+}
 
 function setIcon(isListening: boolean) {
     if (isListening) {
@@ -91,11 +127,20 @@ function setBadgeText(responses : HttpResponseModel[]) {
 
     let text = ``;
     if (responsesLength > 0) {
-        if (responsesLength > 999) {
-            text = `999+`
+        if (responsesLength < 999) {
+            text = responsesLength.toString();
+        }
+        else if (responses.length > 999 && responses.length < 9999) {
+            text = `${(responses.length / 1000).toPrecision(2)}k`;
+        }
+        else if(responses.length > 9999 && responses.length < 99999) {
+            text = `${(responses.length / 1000).toPrecision(1)}k`;
+        }
+        else if(responses.length > 99999 && responses.length < 999999) {
+            text = `${Math.round(responses.length/ 1000)}k`;
         }
         else {
-            text = responsesLength.toString();
+            text = `1M+`;
         }
     }
     
@@ -103,13 +148,11 @@ function setBadgeText(responses : HttpResponseModel[]) {
 }
 
 function updateResponses(responses: HttpResponseModel[], response: HttpResponseModel) {
-    if (responses.findIndex(r => r.id === response.id) === -1) {
-        responses = [...responses, response];
+    responses.push(response);
 
-        chrome.storage.local.set({responses: responses}).then(
-            () => {
-                console.log(`Updated responses.`);
-            }
-        );
-    }
+    chrome.storage.local.set({responses: responses}).then(
+        () => {
+            console.log(`Updated responses.`);
+        }
+    );
 }

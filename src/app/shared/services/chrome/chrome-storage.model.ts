@@ -1,8 +1,8 @@
 import {HttpResponseModel} from "./chrome-web-request.model";
 
 export interface ChromeStorageModel {
-    isListening?: boolean;
-    responses?: HttpResponseModel[];
+    isListening: boolean;
+    responses: HttpResponseModel[];
 }
 
 export enum ChromeStorageKey {

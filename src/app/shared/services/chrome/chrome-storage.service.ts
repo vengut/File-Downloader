@@ -13,18 +13,13 @@ import {
 import {HttpResponseModel} from './chrome-web-request.model';
 import {
     ChromeStorageKey,
-    ChromeStorageModel,
-    StorageNamespace
+    ChromeStorageModel
 } from "./chrome-storage.model";
 import { ChromeSettingsService } from './chrome-settings.service';
 
 @Injectable({providedIn: 'root'})
 export class ChromeStorageService {
     constructor(private chromeSettingsService: ChromeSettingsService) {}
-
-    public getLocalStorage(): Promise<ChromeStorageModel> {
-        return chrome.storage.local.get();
-    }
 
     public getStorage(optionalRefreshRate?: number) {
         let refreshRateSubscription = this.chromeSettingsService.getRefreshRate();
@@ -37,7 +32,7 @@ export class ChromeStorageService {
             .pipe(
                 concatMap((refreshRate) => {
                     return concat(
-                        from(this.getLocalStorage()),
+                        from(getLocalStorage()),
                         this.getStorageChanges(refreshRate)
                     );
                 })
@@ -90,7 +85,7 @@ export class ChromeStorageService {
     private getStorageChanges(refreshRate: number) {
         return this.getStorageEventStream()
             .pipe(
-                mergeMap(() => this.getLocalStorage()),
+                mergeMap(() => getLocalStorage()),
                 bufferTime(refreshRate),
                 map((changes) => changes.pop())
             );
@@ -99,22 +94,24 @@ export class ChromeStorageService {
     private getStorageEventStream() {
         return fromEventPattern(
             (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
-            (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler),
-            (changes: { [key: string]: chrome.storage.StorageChange }, namespace: StorageNamespace) => {
-                const storage: ChromeStorageModel = {};
-
-                if (namespace === 'local') {
-                    if (changes.hasOwnProperty(ChromeStorageKey.IsListening)) {
-                        storage.isListening = changes[ChromeStorageKey.IsListening].newValue ?? false;
-                    }
-
-                    if (changes.hasOwnProperty(ChromeStorageKey.Responses)) {
-                        storage.responses = changes[ChromeStorageKey.Responses].newValue ?? [];
-                    }
-                }
-
-                return storage;
-            }
+            (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler)
         );
     }
+}
+
+export function getLocalStorage(): Promise<ChromeStorageModel> {
+    return chrome.storage.local.get().then((result) => {
+        let isListening = false;
+        let responses: HttpResponseModel[] = [];
+
+        if (result) {
+            isListening = result[ChromeStorageKey.IsListening] ?? isListening;
+            responses = result[ChromeStorageKey.Responses] ?? responses;
+        }
+
+        return {
+            isListening,
+            responses
+        }
+    });
 }
