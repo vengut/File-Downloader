@@ -6,7 +6,7 @@ export class TitleService {
     private titleRegex: RegExp;
     
     constructor(private title: Title) {
-        this.titleRegex = /(Sniffer)(\.\.\.)?( )?(\d+)?( )?(\((\d+)\))?/
+        this.titleRegex = /(Sniffer)(\.\.\.)?( \d+)?( \((\d+)\))?/
     }
 
     public getTitle(): ExtensionTitle {
@@ -47,10 +47,9 @@ export class TitleService {
         let replacer = ``;
         for (const titlePart of ExtensionTitlePartsIterator()) {
             if (titlePart === ExtensionTitleParts.TotalCount) {
-                replacer += totalCount;
-            }
-            else if (titlePart === ExtensionTitleParts.SpaceBetweenLoadingAndTotalCount) {
-                replacer += ` `;
+                if (totalCount > 0) {
+                    replacer += ` ${totalCount}`;
+                }
             }
             else {
                 replacer += `$${titlePart}`
@@ -64,10 +63,9 @@ export class TitleService {
         let replacer = ``;
         for (const titlePart of ExtensionTitlePartsIterator()) {
             if (titlePart === ExtensionTitleParts.FilteredCount) {
-                replacer += `(${filteredCount})`;
-            }
-            else if (titlePart === ExtensionTitleParts.SpaceBetweenTotalCountAndFilteredCount) {
-                replacer += ` `;
+                if (filteredCount > 0) {
+                    replacer += ` (${filteredCount})`;
+                }
             }
             else {
                 replacer += `$${titlePart}`
@@ -79,13 +77,10 @@ export class TitleService {
 
     private updateTitle(replacer: string) {
         const currentTitle = this.title.getTitle();
-        const matches = currentTitle.match(this.titleRegex)?.slice();
         const newTitle = currentTitle
             .replace(this.titleRegex, replacer)
             .replace(/  /g, " ");
         this.title.setTitle(newTitle);
-
-        console.log(currentTitle, matches, replacer, newTitle);
     }
 }
 
@@ -99,9 +94,7 @@ export interface ExtensionTitle {
 export enum ExtensionTitleParts {
     Default = 1,
     IsLoading,
-    SpaceBetweenLoadingAndTotalCount,
     TotalCount,
-    SpaceBetweenTotalCountAndFilteredCount,
     FilteredCount
 }
 

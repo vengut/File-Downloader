@@ -18,7 +18,7 @@ import {SelectItemList} from "../../../settings/settings.model";
 @Injectable({providedIn: 'root'})
 export class ChromeSettingsService {
     public static readonly INPUT_DEBOUNCE: number = 500;
-    public static readonly DEFAULT_REFRESH_RATE: number = 5000;
+    public static readonly DEFAULT_REFRESH_RATE: number = 3000;
     public static readonly MIN_REFRESH_RATE: number = 3000;
     public static readonly MAX_REFRESH_RATE: number = 30000;
     public static readonly STEP_REFRESH_RATE: number = 500;
