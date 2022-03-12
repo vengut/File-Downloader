@@ -1,8 +1,8 @@
 import {SelectItemList} from "../../../settings/settings.model";
 
 export interface ChromeSettingsModel {
-    urlFilterOptions?: SelectItemList;
-    refreshRate?: number;
+    urlFilterOptions: SelectItemList;
+    refreshRate: number;
 }
 
 export enum ChromeSettingsKey {

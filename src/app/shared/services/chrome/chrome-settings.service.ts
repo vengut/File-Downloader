@@ -11,7 +11,6 @@ import {
     bufferTime, concatMap,
 } from 'rxjs';
 import {ChromeSettingsKey, ChromeSettingsModel} from './chrome-settings.model';
-import {StorageNamespace} from "./chrome-storage.model";
 import {isEqual} from "lodash";
 import {SelectItemList} from "../../../settings/settings.model";
 
@@ -30,10 +29,6 @@ export class ChromeSettingsService {
 
     constructor() { }
 
-    public getSyncStorage(): Promise<ChromeSettingsModel> {
-        return chrome.storage.sync.get();
-    }
-
     public getSettings(optionalRefreshRate?: number) {
         let refreshRateSubscription = this.getRefreshRate();
 
@@ -45,7 +40,7 @@ export class ChromeSettingsService {
             .pipe(
                 concatMap((refreshRate) => {
                     return concat(
-                        from(this.getSyncStorage()),
+                        from(getSyncStorage()),
                         this.getSettingsChanges(refreshRate)
                     );
                 })
@@ -106,7 +101,7 @@ export class ChromeSettingsService {
     private getSettingsChanges(refreshRate: number) {
         return this.getStorageEventStream()
             .pipe(
-                mergeMap(() => this.getSyncStorage()),
+                mergeMap(() => getSyncStorage()),
                 bufferTime(refreshRate),
                 map((changes) => changes.pop())
             );
@@ -115,18 +110,24 @@ export class ChromeSettingsService {
     private getStorageEventStream() {
         return fromEventPattern(
             (addHandler)=> chrome.storage.onChanged.addListener(addHandler),
-            (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler),
-            (changes: { [key: string]: chrome.storage.StorageChange }, namespace: StorageNamespace) => {
-                const settings: ChromeSettingsModel = {};
-
-                if (namespace === 'sync') {
-                    if (changes.hasOwnProperty(ChromeSettingsKey.UrlFilterOptions)) {
-                        settings.urlFilterOptions = changes[ChromeSettingsKey.UrlFilterOptions].newValue ?? [];
-                    }
-                }
-
-                return settings;
-            }
+            (removeHandler) => chrome.storage.onChanged.removeListener(removeHandler)
         );
     }
+}
+
+export function getSyncStorage(): Promise<ChromeSettingsModel> {
+    return chrome.storage.sync.get().then((sync) => {
+        let urlFilterOptions = ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS;
+        let refreshRate = ChromeSettingsService.DEFAULT_REFRESH_RATE;
+
+        if (sync) {
+            urlFilterOptions = sync[ChromeSettingsKey.UrlFilterOptions] ?? urlFilterOptions;
+            refreshRate = sync[ChromeSettingsKey.RefreshRate] ?? refreshRate;
+        }
+
+        return {
+            urlFilterOptions,
+            refreshRate
+        }
+    });
 }
