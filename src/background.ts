@@ -7,6 +7,7 @@ const ALARM_NAME: string = 'WakeUpAlarm';
 const periodInMinutes: number = 0.0016;
 const openOptionsContextMenuId: string = "OpenOptions";
 const toggleListenerContextMenuId: string = "ToggleListener";
+const clearResponsesContextMenuId: string = "ClearResponses";
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create(ALARM_NAME, { periodInMinutes });
@@ -47,6 +48,7 @@ function startUp() {
 
 function intializeExtension() {
     createOpenOptionsContextMenuItem();
+    createClearResponsesContextMenuItem();
     return getLocalStorage().then((result) => {
         setIcon(result.isListening);
         setBadgeText(result.responses);
@@ -131,6 +133,9 @@ function onContextMenuClickedListener(info: chrome.contextMenus.OnClickData, tab
         else if (menuItemId === openOptionsContextMenuId) {
             chrome.runtime.openOptionsPage();
         }
+        else if (menuItemId === clearResponsesContextMenuId) {
+            chrome.storage.local.set({ [ChromeStorageKey.Responses]: []})
+        }
        
     }
 }
@@ -176,6 +181,14 @@ function createOpenOptionsContextMenuItem() {
         id: openOptionsContextMenuId,
         contexts: ["all"],
         title: `Open File Downloader`
+    });
+}
+
+function createClearResponsesContextMenuItem() {
+    chrome.contextMenus.create({
+        id: clearResponsesContextMenuId,
+        contexts: ["all"],
+        title: `Clear Responses`
     });
 }
 
