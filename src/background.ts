@@ -5,7 +5,8 @@ import { getLocalStorage } from "./app/shared/services/chrome/chrome-storage.ser
 const EXTENSION_TITLE: string = "Sniffer";
 const ALARM_NAME: string = 'WakeUpAlarm';
 const periodInMinutes: number = 0.0016;
-const listenMenuId: string = "ToggleListener";
+const openOptionsContextMenuId: string = "OpenOptions";
+const toggleListenerContextMenuId: string = "ToggleListener";
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create(ALARM_NAME, { periodInMinutes });
@@ -45,10 +46,11 @@ function startUp() {
 }
 
 function intializeExtension() {
+    createOpenOptionsContextMenuItem();
     return getLocalStorage().then((result) => {
         setIcon(result.isListening);
         setBadgeText(result.responses);
-        createListeningMenuItem(result.isListening);
+        createToggleListenerContextMenuItem(result.isListening);
     });
 }
 
@@ -60,7 +62,7 @@ function onStorageChangedListener(changes: { [key: string]: chrome.storage.Stora
     if (changes && changes[ChromeStorageKey.IsListening]) {
         const isListening: boolean = changes[ChromeStorageKey.IsListening]?.newValue;
         setIcon(isListening);
-        updateListeningMenuItem(isListening);
+        updateToggleListenerContextMenuItem(isListening);
     }
 
     if (changes && changes[ChromeStorageKey.Responses]) {
@@ -120,10 +122,16 @@ function onResponseStartedListener(responseDetails: chrome.webRequest.WebRespons
 
 function onContextMenuClickedListener(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
     const menuItemId = info.menuItemId;
-    if (typeof menuItemId === 'string' && menuItemId === listenMenuId) {
-        getLocalStorage().then((result) => {
-            return chrome.storage.local.set({ [ChromeStorageKey.IsListening]: !result.isListening});
-        });
+    if (typeof menuItemId === 'string') {
+        if(menuItemId === toggleListenerContextMenuId) {
+            getLocalStorage().then((result) => {
+                return chrome.storage.local.set({ [ChromeStorageKey.IsListening]: !result.isListening});
+            });
+        }
+        else if (menuItemId === openOptionsContextMenuId) {
+            chrome.runtime.openOptionsPage();
+        }
+       
     }
 }
 
@@ -138,7 +146,7 @@ function setIcon(isListening: boolean) {
     }
 }
 
-function setBadgeText(responses : HttpResponseModel[]) {
+function setBadgeText(responses: HttpResponseModel[]) {
     const responsesLength = responses && responses.length;
 
     let text = ``;
@@ -163,7 +171,15 @@ function setBadgeText(responses : HttpResponseModel[]) {
     chrome.action.setBadgeText({text});
 }
 
-function createListeningMenuItem(isListening: boolean) {
+function createOpenOptionsContextMenuItem() {
+    chrome.contextMenus.create({
+        id: openOptionsContextMenuId,
+        contexts: ["all"],
+        title: `Open File Downloader`
+    });
+}
+
+function createToggleListenerContextMenuItem(isListening: boolean) {
     let menuLabel: string = "Start";
 
     if (isListening) {
@@ -171,20 +187,20 @@ function createListeningMenuItem(isListening: boolean) {
     }
 
     chrome.contextMenus.create({
-        id: listenMenuId,
+        id: toggleListenerContextMenuId,
         contexts: ["all"],
         title: `${menuLabel} Listening`
     });
 }
 
-function updateListeningMenuItem(isListening: boolean) {
+function updateToggleListenerContextMenuItem(isListening: boolean) {
     let menuLabel: string = "Start";
 
     if (isListening) {
         menuLabel = "Stop"
     }
 
-    chrome.contextMenus.update(listenMenuId, {
+    chrome.contextMenus.update(toggleListenerContextMenuId, {
         contexts: ["all"],
         title: `${menuLabel} Listening`
     });
