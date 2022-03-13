@@ -5,6 +5,7 @@ import { getLocalStorage } from "./app/shared/services/chrome/chrome-storage.ser
 const EXTENSION_TITLE: string = "Sniffer";
 const ALARM_NAME: string = 'WakeUpAlarm';
 const periodInMinutes: number = 0.0016;
+const listenMenuId: string = "ToggleListener";
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create(ALARM_NAME, { periodInMinutes });
@@ -26,7 +27,7 @@ function startUp() {
     }
 
     if (!chrome.storage.onChanged.hasListener(onStorageChangedListener)) {
-        intializeIcon();
+        intializeExtension();
         chrome.storage.onChanged.addListener(onStorageChangedListener);
     }
 
@@ -37,12 +38,17 @@ function startUp() {
     if (!chrome.webRequest.onResponseStarted.hasListener(onResponseStartedListener)) {
         chrome.webRequest.onResponseStarted.addListener(onResponseStartedListener, { urls: ["<all_urls>"] });
     }
+
+    if (!chrome.contextMenus.onClicked.hasListener(onContextMenuClickedListener)) {
+        chrome.contextMenus.onClicked.addListener(onContextMenuClickedListener);
+    }
 }
 
-function intializeIcon() {
+function intializeExtension() {
     return getLocalStorage().then((result) => {
         setIcon(result.isListening);
         setBadgeText(result.responses);
+        createListeningMenuItem(result.isListening);
     });
 }
 
@@ -54,6 +60,7 @@ function onStorageChangedListener(changes: { [key: string]: chrome.storage.Stora
     if (changes && changes[ChromeStorageKey.IsListening]) {
         const isListening: boolean = changes[ChromeStorageKey.IsListening]?.newValue;
         setIcon(isListening);
+        updateListeningMenuItem(isListening);
     }
 
     if (changes && changes[ChromeStorageKey.Responses]) {
@@ -111,6 +118,15 @@ function onResponseStartedListener(responseDetails: chrome.webRequest.WebRespons
     });
 }
 
+function onContextMenuClickedListener(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
+    const menuItemId = info.menuItemId;
+    if (typeof menuItemId === 'string' && menuItemId === listenMenuId) {
+        getLocalStorage().then((result) => {
+            return chrome.storage.local.set({ [ChromeStorageKey.IsListening]: !result.isListening});
+        });
+    }
+}
+
 function setIcon(isListening: boolean) {
     if (isListening) {
         chrome.action.setIcon({ path: 'snifferActive.png' });
@@ -145,6 +161,33 @@ function setBadgeText(responses : HttpResponseModel[]) {
     }
     
     chrome.action.setBadgeText({text});
+}
+
+function createListeningMenuItem(isListening: boolean) {
+    let menuLabel: string = "Start";
+
+    if (isListening) {
+        menuLabel = "Stop"
+    }
+
+    chrome.contextMenus.create({
+        id: listenMenuId,
+        contexts: ["all"],
+        title: `${menuLabel} Listening`
+    });
+}
+
+function updateListeningMenuItem(isListening: boolean) {
+    let menuLabel: string = "Start";
+
+    if (isListening) {
+        menuLabel = "Stop"
+    }
+
+    chrome.contextMenus.update(listenMenuId, {
+        contexts: ["all"],
+        title: `${menuLabel} Listening`
+    });
 }
 
 function updateResponses(responses: HttpResponseModel[], response: HttpResponseModel) {

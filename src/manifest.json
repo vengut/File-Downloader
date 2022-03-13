@@ -8,6 +8,7 @@
     },
     "permissions": [
         "alarms",
+        "contextMenus",
         "storage",
         "activeTab",
         "scripting",
