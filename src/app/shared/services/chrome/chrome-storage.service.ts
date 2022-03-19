@@ -1,14 +1,14 @@
 import {Injectable} from '@angular/core';
 import {
     bufferTime,
-    concat, concatMap,
+    concat, 
+    concatMap,
     from,
     fromEventPattern,
     map,
     mergeMap,
     Observable,
-    of,
-    switchMap
+    of
 } from 'rxjs';
 import {HttpResponseModel} from './chrome-web-request.model';
 import {
@@ -40,46 +40,19 @@ export class ChromeStorageService {
     }
 
     public setIsListening(newIsListening: boolean): Observable<boolean> {
-        return this.getIsListening().pipe(
-            switchMap((oldIsListening) => {
-                if (oldIsListening === newIsListening) {
-                    return of(newIsListening);
-                }
-
-                return this.setValue<boolean>(ChromeStorageKey.IsListening, newIsListening);
-            })
-        );
+        return from(setIsListening(newIsListening));
     }
 
-    private getIsListening(): Observable<boolean> {
-        return this.getValue<boolean>(ChromeStorageKey.IsListening)
-            .pipe(
-                map((isListening) => isListening === null || isListening === undefined ? false : isListening)
-            );
+    public getIsListening(): Observable<boolean> {
+        return from(getIsListening());
     }
 
     public getResponses(): Observable<HttpResponseModel[]> {
-        return this.getValue<HttpResponseModel[]>(ChromeStorageKey.Responses)
-            .pipe(
-                map((responses) => responses === null || responses === undefined ? [] : responses)
-            );
+        return from(getResponses());
     }
 
     public clearResponses(): Observable<HttpResponseModel[]> {
-        return this.setValue<HttpResponseModel[]>(ChromeStorageKey.Responses, []);
-    }
-
-    private getValue<T>(key: ChromeStorageKey): Observable<T> {
-        return from(chrome.storage.local.get(key)).pipe(
-            map(local => local[key])
-        );
-    }
-
-    private setValue<T>(key: ChromeStorageKey, value: T): Observable<T> {
-        console.log(`Updated ${key} on ${new Date().toLocaleTimeString('en-US', { hour12: false })}.`);
-        return from(chrome.storage.local.set({ [key]: value })).pipe(
-            map(() => value)
-        );
+        return from(setResponses([]));
     }
 
     private getStorageChanges(refreshRate: number) {
@@ -99,19 +72,58 @@ export class ChromeStorageService {
     }
 }
 
-export function getLocalStorage(): Promise<ChromeStorageModel> {
-    return chrome.storage.local.get().then((result) => {
-        let isListening = false;
-        let responses: HttpResponseModel[] = [];
+export async function getLocalStorage(): Promise<ChromeStorageModel> {
+    const result = await chrome.storage.local.get();
 
-        if (result) {
-            isListening = result[ChromeStorageKey.IsListening] ?? isListening;
-            responses = result[ChromeStorageKey.Responses] ?? responses;
-        }
+    let isListening = false;
+    let responses: HttpResponseModel[] = [];
 
-        return {
-            isListening,
-            responses
-        }
-    });
+    if (result) {
+        isListening = result[ChromeStorageKey.IsListening] ?? isListening;
+        responses = result[ChromeStorageKey.Responses] ?? responses;
+    }
+    
+    return {
+        isListening,
+        responses
+    };
+}
+
+export async function getIsListening(): Promise<boolean> {
+    const isListening = await getLocalStorageValue<boolean>(ChromeStorageKey.IsListening);
+
+    return isListening === null || isListening === undefined ? false : isListening;
+}
+
+export async function getResponses(): Promise<HttpResponseModel[]> {
+    const responses = await getLocalStorageValue<HttpResponseModel[]>(ChromeStorageKey.Responses);
+
+    return responses === null || responses === undefined ? [] : responses;
+}
+
+export async function setIsListening(newIsListening: boolean): Promise<boolean> {
+    const oldIsListening = await getIsListening();
+
+    if (oldIsListening === newIsListening) {
+        return newIsListening;
+    }
+
+    return setLocalStorageValue<boolean>(ChromeStorageKey.IsListening, newIsListening);
+}
+
+export async function setResponses(responses: HttpResponseModel[]): Promise<HttpResponseModel[]> {
+    return setLocalStorageValue<HttpResponseModel[]>(ChromeStorageKey.Responses, responses);
+}
+
+async function getLocalStorageValue<T>(key: ChromeStorageKey): Promise<T> {
+    const local = await chrome.storage.local.get(key);
+    return local[key];
+}
+
+async function setLocalStorageValue<T>(key: ChromeStorageKey, value: T): Promise<T> {
+    console.log(`Updated ${key} on ${new Date().toLocaleTimeString('en-US', { hour12: false })}.`);
+
+    await chrome.storage.local.set({ [key]: value });
+
+    return value;
 }

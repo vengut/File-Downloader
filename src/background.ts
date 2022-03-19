@@ -1,6 +1,6 @@
 import {HttpResponseModel} from "./app/shared/services/chrome/chrome-web-request.model";
 import {ChromeStorageKey} from "./app/shared/services/chrome/chrome-storage.model";
-import { getLocalStorage } from "./app/shared/services/chrome/chrome-storage.service";
+import { getIsListening, getLocalStorage, setIsListening, setResponses } from "./app/shared/services/chrome/chrome-storage.service";
 
 const EXTENSION_TITLE: string = "Sniffer";
 const ALARM_NAME: string = 'WakeUpAlarm';
@@ -18,7 +18,7 @@ chrome.runtime.onStartup.addListener(() => {
 });
 
 chrome.alarms.onAlarm.addListener(() => {
-    //Keeps extension from going into inactive mode.
+    // Keeps extension from going into inactive mode.
 });
 
 startUp();
@@ -122,21 +122,20 @@ function onResponseStartedListener(responseDetails: chrome.webRequest.WebRespons
     });
 }
 
-function onContextMenuClickedListener(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
+async function onContextMenuClickedListener(info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) {
     const menuItemId = info.menuItemId;
     if (typeof menuItemId === 'string') {
-        if(menuItemId === toggleListenerContextMenuId) {
-            getLocalStorage().then((result) => {
-                return chrome.storage.local.set({ [ChromeStorageKey.IsListening]: !result.isListening});
+        if (menuItemId === toggleListenerContextMenuId) {
+            getIsListening().then((isListening) => {
+                return setIsListening(!isListening);
             });
         }
         else if (menuItemId === openOptionsContextMenuId) {
             chrome.runtime.openOptionsPage();
         }
         else if (menuItemId === clearResponsesContextMenuId) {
-            chrome.storage.local.set({ [ChromeStorageKey.Responses]: []})
+            setResponses([]);
         }
-       
     }
 }
 
@@ -222,9 +221,7 @@ function updateToggleListenerContextMenuItem(isListening: boolean) {
 function updateResponses(responses: HttpResponseModel[], response: HttpResponseModel) {
     responses.push(response);
 
-    chrome.storage.local.set({responses: responses}).then(
-        () => {
-            console.log(`Updated responses.`);
-        }
-    );
+    setResponses(responses).then((responses) => {
+        console.log(`Updated responses`);
+    });
 }

@@ -4,11 +4,11 @@ import {
     from,
     map,
     fromEventPattern,
-    switchMap,
     of,
     mergeMap,
     concat,
-    bufferTime, concatMap,
+    bufferTime, 
+    concatMap
 } from 'rxjs';
 import {ChromeSettingsKey, ChromeSettingsModel} from './chrome-settings.model';
 import {isEqual} from "lodash";
@@ -48,54 +48,19 @@ export class ChromeSettingsService {
     }
 
     public setUrlFilterOptions(newUrlFilterOptions: SelectItemList): Observable<SelectItemList> {
-        return this.getUrlFilterOptions().pipe(
-            switchMap(oldUrlFilterOptions => {
-                if (isEqual(oldUrlFilterOptions, newUrlFilterOptions)) {
-                    return of(oldUrlFilterOptions);
-                }
-
-                return this.setSetting<SelectItemList>(ChromeSettingsKey.UrlFilterOptions, newUrlFilterOptions === undefined || newUrlFilterOptions === null ? ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS : newUrlFilterOptions);
-            })
-        );
+        return from(setUrlFilterOptions(newUrlFilterOptions));
     }
 
     public setRefreshRate(newRefreshRate: number): Observable<number> {
-        return this.getRefreshRate().pipe(
-            switchMap((oldRefreshRate) => {
-                if (oldRefreshRate === newRefreshRate) {
-                    return of(newRefreshRate);
-                }
-
-                return this.setSetting<number>(ChromeSettingsKey.RefreshRate, newRefreshRate);
-            })
-        );
+        return from(setRefreshRate(newRefreshRate));
     }
 
     public getUrlFilterOptions(): Observable<SelectItemList> {
-        return this.getSetting<SelectItemList>(ChromeSettingsKey.UrlFilterOptions).pipe(
-            map(urlFilterOptions => urlFilterOptions === null || urlFilterOptions === undefined ? ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS : urlFilterOptions)
-        );
+        return from(getUrlFilterOptions());
     }
 
     public getRefreshRate(): Observable<number> {
-        return this.getSetting<number>(ChromeSettingsKey.RefreshRate)
-            .pipe(
-                map((refreshRate) => refreshRate === null || refreshRate === undefined ? ChromeSettingsService.DEFAULT_REFRESH_RATE : refreshRate)
-            );
-    }
-
-
-    private getSetting<T>(key: ChromeSettingsKey): Observable<T> {
-        return from(chrome.storage.sync.get(key)).pipe(
-            map(sync => sync[key])
-        );
-    }
-
-    private setSetting<T>(key: ChromeSettingsKey, value: T): Observable<T> {
-        console.log(`Updated Setting ${key} on ${new Date().toLocaleTimeString('en-US', { hour12: false })}.`);
-        return from(chrome.storage.sync.set({ [key]: value })).pipe(
-            map(() => value)
-        );
+        return from(getRefreshRate());
     }
 
     private getSettingsChanges(refreshRate: number) {
@@ -115,19 +80,64 @@ export class ChromeSettingsService {
     }
 }
 
-export function getSyncStorage(): Promise<ChromeSettingsModel> {
-    return chrome.storage.sync.get().then((sync) => {
-        let urlFilterOptions = ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS;
-        let refreshRate = ChromeSettingsService.DEFAULT_REFRESH_RATE;
+export async function getSyncStorage(): Promise<ChromeSettingsModel> {
+    const sync = await chrome.storage.sync.get();
 
-        if (sync) {
-            urlFilterOptions = sync[ChromeSettingsKey.UrlFilterOptions] ?? urlFilterOptions;
-            refreshRate = sync[ChromeSettingsKey.RefreshRate] ?? refreshRate;
-        }
+    let urlFilterOptions = ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS;
+    let refreshRate = ChromeSettingsService.DEFAULT_REFRESH_RATE;
 
-        return {
-            urlFilterOptions,
-            refreshRate
-        }
-    });
+    if (sync) {
+        urlFilterOptions = sync[ChromeSettingsKey.UrlFilterOptions] ?? urlFilterOptions;
+        refreshRate = sync[ChromeSettingsKey.RefreshRate] ?? refreshRate;
+    }
+
+    return {
+        urlFilterOptions,
+        refreshRate
+    };
+}
+
+export async function getRefreshRate(): Promise<number> {
+    const refreshRate = await getSyncStorageValue<number>(ChromeSettingsKey.RefreshRate);
+
+    return refreshRate === null || refreshRate === undefined ? ChromeSettingsService.DEFAULT_REFRESH_RATE : refreshRate;
+}
+
+export async function getUrlFilterOptions(): Promise<SelectItemList> {
+    const urlFilterOptions = await getSyncStorageValue<SelectItemList>(ChromeSettingsKey.UrlFilterOptions);
+
+    return urlFilterOptions === null || urlFilterOptions === undefined ? ChromeSettingsService.DEFAULT_URL_FILTER_OPTIONS : urlFilterOptions;
+}
+
+export async function setRefreshRate(newRefreshRate: number): Promise<number> {
+    const oldRefreshRate = await getRefreshRate();
+
+    if (oldRefreshRate === newRefreshRate) {
+        return newRefreshRate;
+    }
+
+    return setSyncStorageValue(ChromeSettingsKey.RefreshRate, newRefreshRate);
+}
+
+export async function setUrlFilterOptions(newUrlFilterOptions: SelectItemList): Promise<SelectItemList> {
+    const oldUrlFilterOptions = await getUrlFilterOptions();
+
+    if (isEqual(oldUrlFilterOptions, newUrlFilterOptions)) {
+        return newUrlFilterOptions;
+    }
+
+    return setSyncStorageValue(ChromeSettingsKey.UrlFilterOptions, newUrlFilterOptions);
+}
+
+async function getSyncStorageValue<T>(key: ChromeSettingsKey): Promise<T> {
+    const sync = await chrome.storage.sync.get(key);
+    return sync[key];
+}
+
+async function setSyncStorageValue<T>(key: ChromeSettingsKey, value: T): Promise<T> {
+    console.log(`Updated Setting ${key} on ${new Date().toLocaleTimeString('en-US', { hour12: false })}.`);
+
+    await chrome.storage.sync.set({ [key]: value });
+
+    return value;
 }
