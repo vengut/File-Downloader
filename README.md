@@ -1,6 +1,6 @@
 # File Downloader
 
-Capture HTTP Responses and download them.
+Chrome Extension that captures HTTP Responses and download them.
 
 ## Chrome Extension
 
