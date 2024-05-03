@@ -1,0 +1,21 @@
+name: Build & Upload Extension
+
+on:
+  pull_request:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Install Packages
+        run: npm ci
+      - name: Build Extension
+        run: npm run build
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.3.3
+        with:
+            name: Extension
+            path: dist/file-downloader
+            retention-days: 1
