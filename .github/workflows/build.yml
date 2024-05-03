@@ -1,0 +1,21 @@
+name: Build
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Install Packages
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.3.3
+        with:
+            name: build
+            path: build
+            retention-days: 1
