@@ -1,10 +1,10 @@
-name: Build
+name: Build & Upload Extension
 
 on:
   pull_request:
 
 jobs:
-  build:
+  Build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -17,6 +17,6 @@ jobs:
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.3
         with:
-            name: build
-            path: build
+            name: Extension
+            path: build/file-downloader
             retention-days: 1
